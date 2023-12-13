@@ -39,26 +39,23 @@ class Rectangle:
             return (0, max(1, min(value, axis - 1)))
 
 
-    def split_room(self, split = None, min_side_len = 3):
-        '''
-        Desired behavior:
+    def split_room(self, split = None, min_side_len = 5):
 
-        '''
         if split is None:
             split = self.choose_split_spot()
         if split[0] == 0:
             # split on row split[1]
             rect_a = Rectangle(self.x1, self.y1, 
-                            self.width, split[1] - 1)
+                            self.width, split[1] - random.randint(1, 2))
             rect_b = Rectangle(self.x1, self.y1 + split[1], 
-                            self.width, self.height - (split[1]))
+                            self.width, self.height - (split[1]) - random.randint(1, 2))
 
         elif split[0] == 1:
             # split on col split[1]
             rect_a = Rectangle(self.x1, self.y1, 
-                            split[1] - 1, self.height)
+                            split[1] - random.randint(1, 2), self.height)
             rect_b = Rectangle(self.x1 + split[1], self.y1, 
-                            self.width - (split[1]), self.height)
+                            self.width - (split[1]) - random.randint(1, 2), self.height)
         else:
             # don't split the room.
             return None
@@ -93,19 +90,35 @@ class Level():
                         self.grid[j][i] = char
 
     def draw_grid(self):
-        grid = [[' ' for _ in range(self.width)] for _ in range(self.height)]
-
-        for room in self.room_heap:
+        # Define Unicode corner characters
+        bottom_left_corner = '\u2514'
+        top_right_corner = '\u2510'
+        top_left_corner = '\u250C'
+        bottom_right_corner = '\u2518'
+        grid = [['\u2591' for _ in range(self.width)] for _ in range(self.height)]
+        room_list = list(self.room_heap) + self.rooms_placed
+        for room in room_list:
             for i in range(room.x1, room.x1 + room.width):
                 for j in range(room.y1, room.y1 + room.height):
                     if 0 <= i < self.width and 0 <= j < self.height:
+                        # Use '*' for interior parts of the room
                         grid[j][i] = "*"
 
-        for room in self.rooms_placed:
-            for i in range(room.x1, room.x1 + room.width):
-                for j in range(room.y1, room.y1 + room.height):
-                    if 0 <= i < self.width and 0 <= j < self.height:
-                        grid[j][i] = "X"
+                        # Check if it's an edge and update the character accordingly
+                        if i == room.x1 or i == room.x1 + room.width - 1:
+                            grid[j][i] = "|"
+                        if j == room.y1 or j == room.y1 + room.height - 1:
+                            grid[j][i] = "-"
+
+                        # Check if it's a corner and update the character accordingly
+                        if (i, j) == (room.x1, room.y1):
+                            grid[j][i] = top_left_corner
+                        elif (i, j) == (room.x1 + room.width - 1, room.y1):
+                            grid[j][i] = top_right_corner
+                        elif (i, j) == (room.x1, room.y1 + room.height - 1):
+                            grid[j][i] = bottom_left_corner
+                        elif (i, j) == (room.x1 + room.width - 1, room.y1 + room.height - 1):
+                            grid[j][i] = bottom_right_corner
 
         return grid
 
@@ -146,11 +159,10 @@ class Level():
                         heappush(self.room_heap, room)
         
 
-        
 
 def main(stdscr):
-    map_width = 60
-    map_height = 40
+    map_width = 45
+    map_height = 45
     room_threshold = 8
     level = Level(map_width, map_height, room_threshold, 10)
     level.generateRooms()
@@ -161,9 +173,9 @@ def main(stdscr):
     stdscr.getch()
 
 
-def oldmain(stdscr):
-    map_width = 60
-    map_height = 40
+def iterated_main(stdscr):
+    map_width = 45
+    map_height = 45
     room_threshold = 8
     level = Level(map_width, map_height, room_threshold, 10)
 
@@ -188,4 +200,4 @@ def oldmain(stdscr):
 
 
 if __name__ == "__main__":
-    curses.wrapper(main)
+    curses.wrapper(iterated_main)
