@@ -1,4 +1,5 @@
 import curses
+import levelMaker
 
 class Unit:
     def __init__(self, x, y, char='@'):
@@ -12,6 +13,7 @@ class Game:
         self.stdscr = stdscr
         self.player = Unit(0, 0, '@')
         self.game_map = [['.' for _ in range(20)] for _ in range(10)]
+        # self.game_map = levelMaker.generateLevel()
 
     def handle_input(self):
         key = self.stdscr.getch()
