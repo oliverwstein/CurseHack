@@ -1,7 +1,5 @@
 import curses
 import random
-from heapq import heappop, heappush, heapify
-import logging
 
 class Rectangle:
     def __init__(self, x1, y1, width, height):
@@ -11,62 +9,6 @@ class Rectangle:
         self.height = height
         self.area = self.width * self.height
 
-    def __lt__(self, other):
-        return self.area > other.area
-
-    def choose_split_spot(self):
-        rows = self.height
-        cols = self.width
-        if rows < 7 and cols < 7:
-            return (-1, -1)
-        elif rows < 7:
-            axis = cols
-            value = int(round(random.gauss((rows - 1) / 2, ((rows - 1) / 2)/ 2)))
-            return (1, max(1, min(value, rows - 1)))
-        elif cols < 7:
-            axis = rows
-        else:
-            total_weight = rows + cols
-            probability_1 = cols / total_weight
-            if random.random() < probability_1:
-                axis = cols
-            else:
-                axis = rows
-        value = int(round(random.gauss((axis - 1) / 2, ((axis - 1) / 2)/ 2)))
-        if axis is cols:
-            return (1, max(1, min(value, axis - 1)))
-        else:
-            return (0, max(1, min(value, axis - 1)))
-
-
-    def split_room(self, split = None, min_side_len = 5):
-
-        if split is None:
-            split = self.choose_split_spot()
-        if split[0] == 0:
-            # split on row split[1]
-            rect_a = Rectangle(self.x1, self.y1, 
-                            self.width, split[1] - random.randint(1, 2))
-            rect_b = Rectangle(self.x1, self.y1 + split[1], 
-                            self.width, self.height - (split[1]) - random.randint(1, 2))
-
-        elif split[0] == 1:
-            # split on col split[1]
-            rect_a = Rectangle(self.x1, self.y1, 
-                            split[1] - random.randint(1, 2), self.height)
-            rect_b = Rectangle(self.x1 + split[1], self.y1, 
-                            self.width - (split[1]) - random.randint(1, 2), self.height)
-        else:
-            # don't split the room.
-            return None
-        if (min(rect_a.width, rect_a.height) < min_side_len) and (min(rect_b.width, rect_b.height) < min_side_len):
-            return None
-        elif min(rect_a.width, rect_a.height) < min_side_len:
-            return [rect_b]
-        elif min(rect_b.width, rect_b.height) < min_side_len:
-            return [rect_a]
-        else:
-            return [rect_a, rect_b]
     
 class Level():
 
@@ -77,9 +19,6 @@ class Level():
         self.room_threshold = room_threshold
         self.depth = depth
         self.grid = grid = [[' ' for _ in range(self.width)] for _ in range(self.height)]
-        room = Rectangle(0, 0, self.height, self.width)
-        self.room_heap = [room]
-        heapify(self.room_heap)
         self.rooms_placed = []
 
 
@@ -96,12 +35,12 @@ class Level():
         top_left_corner = '\u250C'
         bottom_right_corner = '\u2518'
         grid = [['\u2591' for _ in range(self.width)] for _ in range(self.height)]
-        room_list = list(self.room_heap) + self.rooms_placed
+        room_list = self.rooms_placed
         for room in room_list:
             for i in range(room.x1, room.x1 + room.width):
                 for j in range(room.y1, room.y1 + room.height):
                     if 0 <= i < self.width and 0 <= j < self.height:
-                        # Use '*' for interior parts of the room
+                        # Use "*" for interior parts of the room
                         grid[j][i] = "*"
 
                         # Check if it's an edge and update the character accordingly
@@ -123,11 +62,6 @@ class Level():
         return grid
 
     def render(self, stdscr):
-        heap_info = f"Heap: {len(self.room_heap)}\n"
-        for item in self.room_heap:
-            heap_info += f"{item.x1}, {item.y1}, {item.width}, {item.height}\n"
-
-        stdscr.addstr(0, 0, heap_info)
         max_y, max_x = stdscr.getmaxyx()
 
         # Calculate the position to center the grid
@@ -145,59 +79,138 @@ class Level():
 
         stdscr.refresh()
 
-    def generateRooms(self):
-        while len(self.room_heap) > 0:
-            room = heappop(self.room_heap)
-            if random.random() > 2*(1 - 0.5 * (room.area / (3 * self.area))):
+    def addRoom(self):
+        attempts = 0
+        while attempts < 100:
+            width = random.randint(5, 10)
+            height = random.randint(5, 8)
+            x1 = random.randint(1, self.width - width - 1)
+            y1 = random.randint(1, self.height - height - 1)
+            room = Rectangle(x1, y1, width, height)
+            if self.is_valid_placement(room):
                 self.rooms_placed.append(room)
-            else:
-                new = room.split_room()
-                if new == None:
-                    self.rooms_placed.append(room)
-                else:
-                    for room in new:
-                        heappush(self.room_heap, room)
+                return True
+        return False
         
+    def is_valid_placement(self, new_room, buffer = 3):
+        for rect in self.rooms_placed:
+            if (new_room.x1 < rect.x1 + rect.width + buffer and
+                    new_room.x1 + new_room.width + buffer > rect.x1 and
+                    new_room.y1 < rect.y1 + rect.height + buffer and
+                    new_room.y1 + new_room.height + buffer > rect.y1):
+                # Rectangles are too close
+                return False
+        # No overlap with any existing rectangle
+        return True
+    
+    def sort_rooms(self):
+        self.rooms_placed = sorted(self.rooms_placed, key=lambda room: (room.x1, room.y1))
+
+    def make_corridors(self):
+        n_rooms = len(self.rooms_placed)
+
+        # First Step: Join each room to the next one in the sequence
+        for a in range(n_rooms - 1):
+            self.join_rooms(a, a + 1, 100)
+            if random.random() < 0.02:
+                break
+
+        # Second Step: Join each room to the room two steps down the array
+        for a in range(n_rooms - 2):
+            self.join_rooms(a, a + 2, 15)
+
+        # Third Step: Join each room to every other room
+        for a in range(n_rooms):
+            for b in range(n_rooms):
+                if a != b:
+                    self.join_rooms(a, b, 10)
+
+        # Fourth Step: Join random pairs of rooms
+        if n_rooms > 2:
+            for i in range(random.randint(4, n_rooms + 4)):
+                a = random.randint(0, n_rooms - 1)
+                b = random.randint(0, n_rooms - 3)
+                if b >= a:
+                    b += 2
+                self.join_rooms(a, b, 10)
+
+    def join_rooms(self, a, b, max_corridor_length):
+        # Your logic for joining rooms goes here
+        room_a = self.rooms_placed[a]
+        room_b = self.rooms_placed[b]
+
+        # Identify connection points and generate corridor path
+        start = (room_a.x1 + room_a.width // 2, room_a.y1 + room_a.height // 2)
+        end = (room_b.x1 + room_b.width // 2, room_b.y1 + room_b.height // 2)
+        corridor_path = self.generate_corridor(start, end, max_corridor_length)
+
+        # Update grid with corridor path
+        for x, y in corridor_path:
+            if 0 <= x < self.width and 0 <= y < self.height:
+                if self.grid[y][x] == '\u2591':
+                    self.grid[y][x] = "#"
+    
+    def generate_corridor(self, start, end, max_corridor_length):
+        corridor_path = []
+
+        x, y = start
+        dx = end[0] - x
+        dy = end[1] - y
+
+        # Bresenham's line algorithm
+        x_step = 1 if dx > 0 else -1
+        y_step = 1 if dy > 0 else -1
+
+        dx = abs(dx)
+        dy = abs(dy)
+
+        if dx > dy:
+            p = 2 * dy - dx
+            while x != end[0]:
+                corridor_path.append((x, y))
+                x += x_step
+                if p >= 0:
+                    y += y_step
+                    p -= 2 * dx
+                p += 2 * dy
+        else:
+            p = 2 * dx - dy
+            while y != end[1]:
+                corridor_path.append((x, y))
+                y += y_step
+                if p >= 0:
+                    x += x_step
+                    p -= 2 * dy
+                p += 2 * dx
+
+        # Check if the corridor path length exceeds the maximum length
+        if len(corridor_path) > max_corridor_length:
+            return []
+        else:
+            return corridor_path  # Return the generated corridor path
+
+
 
 
 def main(stdscr):
-    map_width = 45
-    map_height = 45
-    room_threshold = 8
+    map_width = 70
+    map_height = 30
+    room_threshold = random.randint(6, 10)
     level = Level(map_width, map_height, room_threshold, 10)
-    level.generateRooms()
+    space = True
+    while space:
+        if len(level.rooms_placed) >= level.room_threshold:
+            break
+        level.addRoom()
     level.grid = level.draw_grid()
     curses.curs_set(0)
+    level.make_corridors()
     level.render(stdscr)
     stdscr.refresh()
+    
     stdscr.getch()
-
-
-def iterated_main(stdscr):
-    map_width = 45
-    map_height = 45
-    room_threshold = 8
-    level = Level(map_width, map_height, room_threshold, 10)
-
-    while True:
-        curses.curs_set(0)
-        stdscr.clear()
-        room_list = [x for x in level.room_heap]
-        level.grid = level.draw_grid()
-        room = heappop(level.room_heap)
-        if random.random() > 1 - 0.5 * (room.area / (3 * level.area)):
-            level.rooms_placed.append(room)
-        else:
-            new = room.split_room()
-            if new == None:
-                level.rooms_placed.append(room)
-            else:
-                for room in new:
-                    heappush(level.room_heap, room)
-        level.render(stdscr)
-        stdscr.refresh()
-        stdscr.getch()
-
+    
 
 if __name__ == "__main__":
-    curses.wrapper(iterated_main)
+    curses.wrapper(main)
+
