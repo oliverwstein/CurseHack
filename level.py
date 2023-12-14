@@ -152,7 +152,6 @@ class Level():
     
     def generate_corridor(self, start, end, max_corridor_length):
         corridor_path = []
-
         x, y = start
         dx = end[0] - x
         dy = end[1] - y
@@ -172,6 +171,9 @@ class Level():
                 if p >= 0:
                     y += y_step
                     p -= 2 * dx
+                    # Update the flanking tile to prevent diagonal movement
+                    corridor_path.append((x, y - y_step))
+                    corridor_path.append((x - x_step, y))
                 p += 2 * dy
         else:
             p = 2 * dx - dy
@@ -181,16 +183,16 @@ class Level():
                 if p >= 0:
                     x += x_step
                     p -= 2 * dy
+                    # Update the flanking tile to prevent diagonal movement
+                    corridor_path.append((x - x_step, y))
+                    corridor_path.append((x, y - y_step))
                 p += 2 * dx
 
         # Check if the corridor path length exceeds the maximum length
         if len(corridor_path) > max_corridor_length:
-            return []
+            return []  # Return an empty list if the corridor is too long
         else:
             return corridor_path  # Return the generated corridor path
-
-
-
 
 def main(stdscr):
     map_width = 70
