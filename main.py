@@ -10,20 +10,22 @@ class Unit:
         self.char = char
         self.health = 100
 
+    def pos(self):
+        return (self.x, self.y)
+
 class Game:
     def __init__(self, stdscr):
         curses.curs_set(0)  # Hide the cursor
         self.stdscr = stdscr
-        map_width = 70
-        map_height = 30
-        room_threshold = random.randint(6, 10)
+        self.map_width = 70
+        self.map_height = 30
+        self.room_threshold = random.randint(6, 10)
         self.depth = 0
-        self.active_level = level.generate_level(map_width, map_height, room_threshold, self.depth)
+        self.active_level = level.generate_level(self.map_width, self.map_height, self.room_threshold, self.depth)
         self.game_map = self.active_level.grid
         self.dungeon = dict({self.depth:self.active_level})
 
-        self.player = Unit(self.active_level.up_stair[0], 
-                           self.active_level.up_stair[1], '@')
+        self.player = Unit(*self.active_level.up_stair.pos(), '@')
         self.action_message = "What's the move, boss?"
         self.current_action = None
 
@@ -32,12 +34,15 @@ class Game:
 
     def handle_input(self):
         key = self.stdscr.getch()
+        self.action_message = "What's the move, boss?"
         if self.current_action:
             self.current_action.execute(key)
         elif key in [curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_UP, curses.KEY_DOWN]:
             action.Move(self, key)
         elif key == ord('o'):
             action.Open(self, key)
+        elif key in [ord('<'), ord('>')]:
+            action.Climb(self, key)
 
     def render_map(self):
         for y, row in enumerate(self.game_map):

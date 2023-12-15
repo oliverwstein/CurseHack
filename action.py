@@ -49,6 +49,40 @@ class Move(Action):
 
         # Check if the tile is walkable
         return self.game.game_map[y][x].walkable
+    
+class Climb(Action):
+    def execute(self, key):
+        direction = ""
+        if key == ord('<'):
+            direction = "up"
+        elif key == ord('>'):
+            direction = "down"
+
+        if direction:
+            self.try_climb(direction)
+    
+    def try_climb(self, direction):
+        x, y = self.game.player.pos()
+        if self.game.game_map[y][x].tile_type == direction:
+            if direction == "down":
+                self.game.depth += 1
+                self.game.dungeon[self.game.depth] = level.generate_level(self.game.map_width, self.game.map_height, self.game.room_threshold, self.game.depth)
+                self.game.active_level = self.game.dungeon[self.game.depth]
+                self.game.game_map = self.game.active_level.grid
+                self.game.player.x = self.game.active_level.up_stair.x
+                self.game.player.y = self.game.active_level.up_stair.y
+                self.game.set_action_message("Onward and downward!")
+            if direction == "up":
+                if self.game.depth > 0:
+                    self.game.depth -= 1
+                    self.game.dungeon[self.game.depth]
+                    self.game.active_level = self.game.dungeon[self.game.depth]
+                    self.game.game_map = self.game.active_level.grid
+                    self.game.player.x = self.game.active_level.down_stair.x
+                    self.game.player.y = self.game.active_level.down_stair.y
+                    self.game.set_action_message("Was that was too deep for you?")
+            
+            
 
 class Open(Action):
     def execute(self, key):
