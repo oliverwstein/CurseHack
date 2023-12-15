@@ -1,6 +1,6 @@
 import curses
 import random
-from tile import Tile
+from tile import Tile, Door, Wall, Stair
 import kruskal
 
 
@@ -31,41 +31,7 @@ class Room:
 
         # Create a Door object
         return Door(x, y, side)
-
-
-class Door(Tile):
-    def __init__(self, x, y, side, state = 'closed'):
-        if state == 'open':
-            super().__init__('open_door')
-        else:
-            super().__init__('closed_door')
-        self.x = x
-        self.y = y
-        self.connected = False
-        self.side = side
-        self.state = state
     
-    def pos(self):
-        return (self.x, self.y)
-    
-    def open(self):
-        self.char, self.walkable = Tile.tile_types['open_door']
-        self.state = 'open'
-
-    def close(self):
-        self.char, self.walkable = Tile.tile_types['closed_door']
-        self.state = 'closed'
-
-
-
-class Wall(Tile):
-    def __init__(self, x, y, tile_type):
-        super().__init__(tile_type)
-        self.x = x
-        self.y = y
-    
-    def pos(self):
-        return (self.x, self.y)    
 
 class Level():
 
@@ -277,14 +243,14 @@ class Level():
         # Place an up-stair in a random tile in one room
         up_stair_x = random.randint(up_stair_room.x1 + 1, up_stair_room.x1 + up_stair_room.width - 2)
         up_stair_y = random.randint(up_stair_room.y1 + 1, up_stair_room.y1 + up_stair_room.height - 2)
-        self.grid[up_stair_y][up_stair_x] = Tile('up_stair')
-        self.up_stair = (up_stair_x, up_stair_y)
+        self.grid[up_stair_y][up_stair_x] = Stair(up_stair_x, up_stair_y, 'up')
+        self.up_stair = self.grid[up_stair_y][up_stair_x]
 
         # Place a down-stair in a random tile in another room
         down_stair_x = random.randint(down_stair_room.x1 + 1, down_stair_room.x1 + down_stair_room.width - 2)
         down_stair_y = random.randint(down_stair_room.y1 + 1, down_stair_room.y1 + down_stair_room.height - 2)
-        self.grid[down_stair_y][down_stair_x] = Tile('down_stair')
-        self.down_stair = (down_stair_x, down_stair_y)
+        self.grid[down_stair_y][down_stair_x] = Stair(down_stair_x, down_stair_y, 'down')
+        self.down_stair = self.grid[down_stair_y][down_stair_x]
         
 
 def generate_level(map_width, map_height, room_threshold, depth):
