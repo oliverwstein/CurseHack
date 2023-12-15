@@ -1,13 +1,13 @@
 class Tile:
     # Mapping of tile types to their characters and walkability
     tile_types = {
-    "corridor": ("#", True),
+    "corridor": ("\u2591", True),
     "up": ("<", True),
     "down": (">", True),
     "open_door": ("O", True),
     "closed_door": ("0", False),
     "floor": ("\u00B7", True),
-    "backdrop": ("\u2591", False),
+    "backdrop": (" ", False),
     "vertical_wall": ("|", False),
     "horizontal_wall": ("-", False),
     "top_left_corner": ("\u250C", False),

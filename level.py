@@ -5,12 +5,13 @@ import kruskal
 
 
 class Room:
-    def __init__(self, x1, y1, width, height):
+    def __init__(self, x1, y1, width, height, lit = False):
         self.x1 = x1
         self.y1 = y1
         self.width = width
         self.height = height
         self.area = self.width * self.height
+        self.lit = lit
         self.doors = []
 
     def generate_door_on_side(self, side):
@@ -98,6 +99,7 @@ class Level():
             height = random.randint(5, 8)
             x1 = random.randint(1, self.width - width - 1)
             y1 = random.randint(1, self.height - height - 1)
+            
             room = Room(x1, y1, width, height)
             if self.is_valid_placement(room):
                 self.rooms_placed.append(room)
