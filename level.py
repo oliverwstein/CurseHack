@@ -29,20 +29,34 @@ class Room:
         else:
             raise ValueError("Invalid side specified")
 
-        # Create a Door object with the coordinates and default to 'closed_door' type
-        return Door(x, y, side, 'closed_door')
+        # Create a Door object
+        return Door(x, y, side)
 
 
 class Door(Tile):
-    def __init__(self, x, y, side, tile_type='closed_door'):
-        super().__init__(tile_type)
+    def __init__(self, x, y, side, state = 'closed'):
+        if state == 'open':
+            super().__init__('open_door')
+        else:
+            super().__init__('closed_door')
         self.x = x
         self.y = y
         self.connected = False
         self.side = side
+        self.state = state
     
     def pos(self):
         return (self.x, self.y)
+    
+    def open(self):
+        self.char, self.walkable = Tile.tile_types['open_door']
+        self.state = 'open'
+
+    def close(self):
+        self.char, self.walkable = Tile.tile_types['closed_door']
+        self.state = 'closed'
+
+
 
 class Wall(Tile):
     def __init__(self, x, y, tile_type):
