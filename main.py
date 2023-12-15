@@ -2,16 +2,8 @@ import curses
 import level
 import random
 import action
+from unit import *
 
-class Unit:
-    def __init__(self, x, y, char='@'):
-        self.x = x
-        self.y = y
-        self.char = char
-        self.health = 100
-
-    def pos(self):
-        return (self.x, self.y)
 
 class Game:
     def __init__(self, stdscr):
@@ -25,7 +17,7 @@ class Game:
         self.game_map = self.active_level.grid
         self.dungeon = dict({self.depth:self.active_level})
 
-        self.player = Unit(*self.active_level.up_stair.pos(), '@')
+        self.player = Unit(*self.active_level.up_stair.pos(), role = 'Wizard', race = 'Human', char  = '@')
         self.action_message = "What's the move, boss?"
         self.current_action = None
 
@@ -56,7 +48,7 @@ class Game:
         start_row = len(self.game_map)
 
         # Example status text, you can modify this based on the game state
-        status_text = f"Health: {self.player.health} | Depth: {self.depth}"
+        status_text = f"{self.player.race} {self.player.role} | Player Level: {self.player.grade} | Depth: {self.depth}"
 
         # Clear the previous status text
         self.stdscr.move(start_row, 0)
