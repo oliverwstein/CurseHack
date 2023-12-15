@@ -30,18 +30,29 @@ class Room:
             raise ValueError("Invalid side specified")
 
         # Create a Door object with the coordinates and default to 'closed_door' type
-        return Door(x, y, 'closed_door')
+        return Door(x, y, side, 'closed_door')
+
 
 class Door(Tile):
-    def __init__(self, x, y, tile_type='closed_door'):
+    def __init__(self, x, y, side, tile_type='closed_door'):
+        super().__init__(tile_type)
+        self.x = x
+        self.y = y
+        self.connected = False
+        self.side = side
+    
+    def pos(self):
+        return (self.x, self.y)
+
+class Wall(Tile):
+    def __init__(self, x, y, tile_type):
         super().__init__(tile_type)
         self.x = x
         self.y = y
     
     def pos(self):
-        return (self.x, self.y)
+        return (self.x, self.y)    
 
-    
 class Level():
 
     def __init__(self, width, height, room_threshold, depth):
@@ -62,22 +73,24 @@ class Level():
 
                     # Check if it's an edge and update the character accordingly
                     if i == room.x1 or i == room.x1 + room.width - 1:
-                        self.grid[j][i] = Tile("vertical_wall")
+                        self.grid[j][i] = Wall(i, j, "vertical_wall")
                     if j == room.y1 or j == room.y1 + room.height - 1:
-                        self.grid[j][i] = Tile("horizontal_wall")
+                        self.grid[j][i] = Wall(i, j, "horizontal_wall")
 
                     # Check if it's a corner and update the character accordingly
                     if (i, j) == (room.x1, room.y1):
-                        self.grid[j][i] = Tile("top_left_corner")
+                        self.grid[j][i] = Wall(i, j, "top_left_corner")
                     elif (i, j) == (room.x1 + room.width - 1, room.y1):
-                        self.grid[j][i] = Tile("top_right_corner")
+                        self.grid[j][i] = Wall(i, j, "top_right_corner")
                     elif (i, j) == (room.x1, room.y1 + room.height - 1):
-                        self.grid[j][i] = Tile("bottom_left_corner")
+                        self.grid[j][i] = Wall(i, j, "bottom_left_corner")
                     elif (i, j) == (room.x1 + room.width - 1, room.y1 + room.height - 1):
-                        self.grid[j][i] = Tile("bottom_right_corner")
+                        self.grid[j][i] = Wall(i, j, "bottom_right_corner")
+
 
     def create_grid(self):
         return [[Tile("backdrop") for _ in range(self.width)] for _ in range(self.height)]
+
 
     def render(self, stdscr):
         max_y, max_x = stdscr.getmaxyx()
@@ -97,6 +110,7 @@ class Level():
 
         stdscr.refresh()
 
+
     def addRoom(self):
         attempts = 0
         while attempts < 100:
@@ -111,6 +125,7 @@ class Level():
                 return True
         return False
         
+
     def is_valid_placement(self, new_room, buffer = 3):
         for room in self.rooms_placed:
             if (new_room.x1 < room.x1 + room.width + buffer and
@@ -122,8 +137,10 @@ class Level():
         # No overlap with any existing Room
         return True
     
+
     def sort_rooms(self):
         self.rooms_placed = sorted(self.rooms_placed, key=lambda room: (room.x1, room.y1))
+
 
     def generate_corridor(self, start, end, max_corridor_length):
         corridor_path = []
@@ -166,9 +183,6 @@ class Level():
         return corridor_path
 
 
-
-
-    
     def add_doors(self):
         for room in self.rooms_placed:
             for side in ['top', 'bottom', 'left', 'right']:
@@ -176,9 +190,11 @@ class Level():
                 room.doors.append(door)
                 self.grid[door.y][door.x] = door
     
+
     def calculate_distance(p1, p2):
         return abs(p1.x - p2.x) + abs(p1.y - p2.y)
     
+
     def calculate_room_distances(self):
         rooms = self.rooms_placed
         room_distances = {}  # {(room_i_id, room_j_id): (door_i, door_j, distance, corridor)}
@@ -192,33 +208,51 @@ class Level():
 
                     for door_i in room_i.doors:
                         for door_j in room_j.doors:
-                            corridor = self.generate_corridor(door_i.pos(), door_j.pos(), 1000)
-                            if corridor:
-                                distance = len(corridor)
-                                if shortest_distance is None or distance < shortest_distance:
-                                    shortest_distance = distance
-                                    shortest_corridor = corridor
-                                    best_doors = (door_i, door_j)
+                            if not door_i.connected and not door_j.connected:
+                                corridor = self.generate_corridor(door_i.pos(), door_j.pos(), 1000)
+                                if corridor:
+                                    distance = len(corridor)
+                                    if shortest_distance is None or distance < shortest_distance:
+                                        shortest_distance = distance
+                                        shortest_corridor = corridor
+                                        best_doors = (door_i, door_j)
 
                     if best_doors:
                         room_distances[(i, j)] = best_doors + (shortest_distance, shortest_corridor)
 
         return room_distances
 
-    def add_MST_corridors(self):
+
+    def add_corridors(self, max_corridor_length=15):
         uf = kruskal.UnionFind(len(self.rooms_placed))
         room_distances = self.calculate_room_distances()
         sorted_distances = sorted(room_distances.items(), key=lambda x: x[1][2])
 
+        # Track connected rooms
+        connected_rooms = set()
+
+        # Adding MST corridors
         for (room_i_id, room_j_id), (door_i, door_j, _, corridor) in sorted_distances:
             if uf.find(room_i_id) != uf.find(room_j_id):
                 uf.union(room_i_id, room_j_id)
-                self.add_corridor_to_grid(corridor)      
+                connected_rooms.add((min(room_i_id, room_j_id), max(room_i_id, room_j_id)))
+                self.add_corridor_to_grid(corridor)
+                door_i.connected = True
+                door_j.connected = True
+
+        for room in self.rooms_placed:
+            for door in room.doors:
+                if not door.connected:
+                    if door.side in ['top', 'bottom']:
+                        self.grid[door.y][door.x] = Wall(door.x, door.y, 'horizontal_wall')
+                    else:
+                        self.grid[door.y][door.x] = Wall(door.x, door.y, 'vertical_wall')
 
     def add_corridor_to_grid(self, corridor):
         for x, y in corridor:
             self.grid[y][x] = Tile('corridor')
     
+
     def add_stairs(self):
         if len(self.rooms_placed) < 2:
             raise ValueError("Not enough rooms to place stairs")
@@ -238,6 +272,7 @@ class Level():
         self.grid[down_stair_y][down_stair_x] = Tile('down_stair')
         self.down_stair = (down_stair_x, down_stair_y)
         
+
 def generate_level(map_width, map_height, room_threshold, depth):
 
     level = Level(map_width, map_height, room_threshold, depth)
@@ -247,10 +282,9 @@ def generate_level(map_width, map_height, room_threshold, depth):
             break
         level.addRoom()
     level.add_doors()
-    level.add_MST_corridors()
+    level.add_corridors()
     level.add_stairs()
     return level
-
 
 
 def main(stdscr):
