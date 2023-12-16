@@ -2,37 +2,7 @@ import curses
 import random
 from tile import Tile, Door, Wall, Stair
 import kruskal
-
-
-class Room:
-    def __init__(self, x1, y1, width, height, lit = False):
-        self.x1 = x1
-        self.y1 = y1
-        self.width = width
-        self.height = height
-        self.area = self.width * self.height
-        self.lit = lit
-        self.doors = []
-
-    def generate_door_on_side(self, side):
-        if side == 'top':
-            x = random.randint(self.x1 + 1, self.x1 + self.width - 2)
-            y = self.y1
-        elif side == 'bottom':
-            x = random.randint(self.x1 + 1, self.x1 + self.width - 2)
-            y = self.y1 + self.height - 1
-        elif side == 'left':
-            x = self.x1
-            y = random.randint(self.y1 + 1, self.y1 + self.height - 2)
-        elif side == 'right':
-            x = self.x1 + self.width - 1
-            y = random.randint(self.y1 + 1, self.y1 + self.height - 2)
-        else:
-            raise ValueError("Invalid side specified")
-
-        # Create a Door object
-        return Door(x, y, side)
-    
+from room import Room
 
 class Level():
 
@@ -49,44 +19,40 @@ class Level():
     def tile_room(self, room):
         for i in range(room.x1, room.x1 + room.width):
             for j in range(room.y1, room.y1 + room.height):
-                if 0 <= i < self.width and 0 <= j < self.height:
-                    self.grid[j][i] = Tile("floor")
+                if 0 <= j < self.height and 0 <= i < self.width:
+                    self.grid[i][j] = Tile(i, j, "floor")
 
-                    # Check if it's an edge and update the character accordingly
+                    if j == room.y1:
+                        self.grid[i][j] = Wall(i, j, "horizontal_wall")
+                    elif j == room.y1 + room.height - 1:
+                        self.grid[i][j] = Wall(i, j, "horizontal_wall")
                     if i == room.x1 or i == room.x1 + room.width - 1:
-                        self.grid[j][i] = Wall(i, j, "vertical_wall")
-                    if j == room.y1 or j == room.y1 + room.height - 1:
-                        self.grid[j][i] = Wall(i, j, "horizontal_wall")
+                        self.grid[i][j] = Wall(i, j, "vertical_wall")
 
-                    # Check if it's a corner and update the character accordingly
                     if (i, j) == (room.x1, room.y1):
-                        self.grid[j][i] = Wall(i, j, "top_left_corner")
+                        self.grid[i][j] = Wall(i, j, "top_left_corner")
                     elif (i, j) == (room.x1 + room.width - 1, room.y1):
-                        self.grid[j][i] = Wall(i, j, "top_right_corner")
+                        self.grid[i][j] = Wall(i, j, "top_right_corner")
                     elif (i, j) == (room.x1, room.y1 + room.height - 1):
-                        self.grid[j][i] = Wall(i, j, "bottom_left_corner")
+                        self.grid[i][j] = Wall(i, j, "bottom_left_corner")
                     elif (i, j) == (room.x1 + room.width - 1, room.y1 + room.height - 1):
-                        self.grid[j][i] = Wall(i, j, "bottom_right_corner")
-
+                        self.grid[i][j] = Wall(i, j, "bottom_right_corner")
 
     def create_grid(self):
-        return [[Tile("backdrop") for _ in range(self.width)] for _ in range(self.height)]
-
+        return [[Tile(x, y, "backdrop") for y in range(self.height)] for x in range(self.width)]
 
     def render(self, stdscr):
         max_y, max_x = stdscr.getmaxyx()
 
-        # Calculate the position to center the grid
-        start_y = max(0, (max_y - len(self.grid)) // 2)
-        start_x = max(0, (max_x - len(self.grid[0])) // 2)
+        start_y = max(0, (max_y - self.width) // 2)
+        start_x = max(0, (max_x - self.height) // 2)
 
-        for y, row in enumerate(self.grid):
-            for x, char in enumerate(row):
-                # Offset the position to center the grid
-                pos_y = start_y + y
-                pos_x = start_x + x
+        for x, column in enumerate(self.grid):
+            for y, char in enumerate(column):
+                pos_x = start_x + y
+                pos_y = start_y + x
 
-                if 0 <= pos_x < max_x and 0 <= pos_y < max_y:
+                if 0 <= pos_y < max_y and 0 <= pos_x < max_x:
                     stdscr.addch(pos_y, pos_x, char)
 
         stdscr.refresh()
@@ -157,7 +123,7 @@ class Level():
                 return False
 
             # Check if the corridor overlaps with non-backdrop tiles
-            if self.grid[y][x].char != Tile.tile_types['backdrop'][0]:
+            if self.grid[x][y].char != Tile.tile_types['backdrop'][0]:
                 return False
 
             corridor_path.append((x, y))
@@ -170,12 +136,9 @@ class Level():
             for side in ['top', 'bottom', 'left', 'right']:
                 door = room.generate_door_on_side(side)
                 room.doors.append(door)
-                self.grid[door.y][door.x] = door
-    
+                x, y = door.pos
+                self.grid[x][y] = door
 
-    def calculate_distance(p1, p2):
-        return abs(p1.x - p2.x) + abs(p1.y - p2.y)
-    
 
     def calculate_room_distances(self):
         rooms = self.rooms_placed
@@ -191,7 +154,7 @@ class Level():
                     for door_i in room_i.doors:
                         for door_j in room_j.doors:
                             if not door_i.connected and not door_j.connected:
-                                corridor = self.generate_corridor(door_i.pos(), door_j.pos(), 1000)
+                                corridor = self.generate_corridor(door_i.pos, door_j.pos, 1000)
                                 if corridor:
                                     distance = len(corridor)
                                     if shortest_distance is None or distance < shortest_distance:
@@ -225,14 +188,17 @@ class Level():
         for room in self.rooms_placed:
             for door in room.doors:
                 if not door.connected:
+                    x, y = door.pos
                     if door.side in ['top', 'bottom']:
-                        self.grid[door.y][door.x] = Wall(door.x, door.y, 'horizontal_wall')
-                    else:
-                        self.grid[door.y][door.x] = Wall(door.x, door.y, 'vertical_wall')
+                        self.grid[x][y] = Wall(x, y, 'horizontal_wall')
+                    elif door.side in ['left']:
+                        self.grid[x][y] = Wall(x, y, 'vertical_wall')
+                    elif door.side in ['right']:
+                        self.grid[x][y] = Wall(x, y, 'vertical_wall')
 
     def add_corridor_to_grid(self, corridor):
         for x, y in corridor:
-            self.grid[y][x] = Tile('corridor')
+            self.grid[x][y] = Tile(x, y, 'corridor')
     
 
     def add_stairs(self):
@@ -245,14 +211,14 @@ class Level():
         # Place an up-stair in a random tile in one room
         up_stair_x = random.randint(up_stair_room.x1 + 1, up_stair_room.x1 + up_stair_room.width - 2)
         up_stair_y = random.randint(up_stair_room.y1 + 1, up_stair_room.y1 + up_stair_room.height - 2)
-        self.grid[up_stair_y][up_stair_x] = Stair(up_stair_x, up_stair_y, 'up')
-        self.up_stair = self.grid[up_stair_y][up_stair_x]
+        self.grid[up_stair_x][up_stair_y] = Stair(up_stair_x, up_stair_y, 'up')
+        self.up_stair = self.grid[up_stair_x][up_stair_y]
 
         # Place a down-stair in a random tile in another room
         down_stair_x = random.randint(down_stair_room.x1 + 1, down_stair_room.x1 + down_stair_room.width - 2)
         down_stair_y = random.randint(down_stair_room.y1 + 1, down_stair_room.y1 + down_stair_room.height - 2)
-        self.grid[down_stair_y][down_stair_x] = Stair(down_stair_x, down_stair_y, 'down')
-        self.down_stair = self.grid[down_stair_y][down_stair_x]
+        self.grid[down_stair_x][down_stair_y] = Stair(down_stair_x, down_stair_y, 'down')
+        self.down_stair = self.grid[down_stair_x][down_stair_y]
         
 
 def generate_level(map_width, map_height, room_threshold, depth):

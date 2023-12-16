@@ -8,8 +8,8 @@ class Unit:
         if race not in UnitData.races:
             raise ValueError(f"Unknown unit race: {race}")
 
-        self.x = x
-        self.y = y
+        self._x = x
+        self._y = y
         self.char = char
         self.grade = grade
         self.role = role
@@ -41,5 +41,12 @@ class Unit:
                         self.growths[stat] = 0
                     break
 
+    @property
     def pos(self):
-        return (self.x, self.y)
+        return (self._x, self._y)
+
+    @pos.setter
+    def pos(self, xy):
+        if not isinstance(xy, tuple) or len(xy) != 2:
+            raise ValueError("Position must be a tuple of two elements: (x, y)")
+        self._x, self._y = xy
