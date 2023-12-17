@@ -1,6 +1,17 @@
 import curses
 import level
 class Action:
+    """
+    The `Action` class serves as a base class for defining various actions that a player can take in the game.
+    Subclasses of Action implement specific actions like moving, opening doors, or climbing stairs.
+
+    Attributes:
+        game (Game): The instance of the game where the action is being executed.
+    
+    Functions:
+        __init__(game, key): Initializes the action with the game instance and the key pressed.
+        execute(key): Abstract method to be implemented by subclasses to define specific action behavior.
+    """
     def __init__(self, game, key):
         self.game = game
         self.execute(key)
@@ -9,6 +20,14 @@ class Action:
         raise NotImplementedError("Execute method must be implemented by subclasses")
 
 class Move(Action):
+    """
+    The `Move` class handles the movement of the player's character in the game.
+
+    Functions:
+        execute(key): Executes the move action based on the key pressed.
+        move(unit, direction): Moves the specified unit in the given direction if the move is legal.
+        is_move_legal(x, y): Checks if a move to the specified coordinates is legal.
+    """
     def execute(self, key):
         direction = ""
         if key == curses.KEY_RIGHT:
@@ -51,6 +70,13 @@ class Move(Action):
         return self.game.game_map[x][y].walkable
     
 class Climb(Action):
+    """
+    The `Climb` class allows the player's character to climb up or down stairs in the game.
+
+    Functions:
+        execute(key): Executes the climb action based on the key pressed.
+        try_climb(direction): Attempts to climb in the specified direction.
+    """
     def execute(self, key):
         direction = ""
         if key == ord('<'):
@@ -83,6 +109,14 @@ class Climb(Action):
             
 
 class Open(Action):
+    """
+    The `Open` class manages the action of opening or closing doors within the game.
+
+    Functions:
+        execute(key): Executes the open action based on the key pressed.
+        handle_directional_open(key): Handles the direction-specific logic for opening a door.
+        try_open(direction): Attempts to open or close a door in the specified direction.
+    """
     def execute(self, key):
         if key == ord('o'):
             self.game.set_action_message("In what direction?")

@@ -2,6 +2,29 @@ import random
 from tile import *
 
 class Room:
+    """
+    The `Room` class represents a single room within a level of the game. It manages the room's dimensions,
+    doors, and other features, providing methods to generate and handle these elements.
+
+    Attributes:
+        x1, y1 (int): The top-left coordinates of the room.
+        width, height (int): The dimensions of the room.
+        depth (int): The depth of the room within the dungeon.
+        area (int): The total area of the room.
+        doors (list): A list of Door objects representing the doors in the room.
+        features (list): A list of features present in the room.
+
+    Functions:
+        __init__(x1, y1, width, height, depth): Initializes a new room with given dimensions and depth.
+        generate_door_on_side(side): Generates a door on a specified side of the room.
+        generate_feature(pos, feature): Generates a feature in the room at a specified position.
+        get_feature_locations(feature_class): Returns positions of features of a given class within the room.
+        get_non_door_adjacent_floor_locations(): Returns floor locations in the room that are not adjacent to doors.
+
+    Usage:
+        `Room` objects are used by the `Level` class to create and manage individual rooms within a level. 
+        They are key to structuring the dungeon layout and populating it with doors and other features.
+    """
     def __init__(self, x1, y1, width, height, depth):
         self.x1 = x1
         self.y1 = y1
@@ -67,12 +90,4 @@ class Room:
         non_adjacent_floor_locations = [pos for pos in floor_locations if pos not in adjacent_to_doors]
 
         return non_adjacent_floor_locations
-
-
-        
-
-
-
-    
-
 
