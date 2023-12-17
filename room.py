@@ -68,11 +68,3 @@ class Room:
 
         return non_adjacent_floor_locations
 
-
-        
-
-
-
-    
-
-

@@ -261,19 +261,3 @@ def generate_level(map_width, map_height, room_threshold, depth):
     return level
 
 
-def main(stdscr):
-    map_width = 70
-    map_height = 30
-    room_threshold = random.randint(6, 10)
-    depth = 10
-    level = generate_level(map_width, map_height, room_threshold, depth)
-    curses.curs_set(0)
-    level.render(stdscr)
-    stdscr.refresh()
-    
-    stdscr.getch()
-    
-
-if __name__ == "__main__":
-    curses.wrapper(main)
-
