@@ -14,10 +14,11 @@ class Tile:
         "top_right_corner": ("╗", False),
         "bottom_left_corner": ("╚", False),
         "bottom_right_corner": ("╝", False),
-        "water": ("≈", False),
         "veg": ("ꕥ", True),
-        "hot_spring": ("♨", False),
-        "rock": ("⭓", False),
+        "water": ("≈", False),
+        "spring": ("♨", False),
+        "solid_rock": ("\u25B2", False),
+        "broken_rock": ("\u00B7", True),
     }
 
     def __init__(self, x, y, tile_type):
@@ -66,12 +67,24 @@ class Stair(Tile):
     def __init__(self, x, y, tile_type):
         super().__init__(x, y, tile_type)
 
+class Floor(Tile):
+    def __init__(self, x, y, tile_type):
+        super().__init__(x, y, tile_type)
 
 class Water(Tile):
-    def __init__(self, x, y, waterdepth, variant = 'pool', tile_type = 'water'):
+    def __init__(self, x, y, water_depth, variant = 'pool', tile_type = 'water'):
         super().__init__(x, y, tile_type)
         self.variant = variant
-        if waterdepth == 'Deep':
+        if water_depth == 'Deep':
+            self.walkable == False
+        else:
+            self.walkable == True
+
+class Spring(Tile):
+    def __init__(self, x, y, water_depth, variant = "hot", tile_type = 'spring'):
+        super().__init__(x, y, tile_type)
+        self.variant = variant
+        if water_depth == 'Deep':
             self.walkable == False
         else:
             self.walkable == True
@@ -84,7 +97,13 @@ class Veg(Tile):
 
 
 class Rock(Tile):
-    def __init__(self, x, y, tile_type = 'rock'):
+    def __init__(self, x, y, state, tile_type = 'solid_rock'):
         super().__init__(x, y, tile_type)
+        if state == 'solid':
+            super().__init__(x, y, 'solid_rock')
+        else:
+            super().__init__(x, y, 'broken_rock')
+            self.walkable = True
+        self.state = state
 
 

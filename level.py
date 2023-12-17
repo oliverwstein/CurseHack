@@ -1,8 +1,9 @@
 import curses
 import random
-from tile import Tile, Door, Wall, Stair
+from tile import *
 import kruskal
 from room import Room
+from feature import Feature
 
 class Level():
 
@@ -20,7 +21,7 @@ class Level():
         for i in range(room.x1, room.x1 + room.width):
             for j in range(room.y1, room.y1 + room.height):
                 if 0 <= j < self.height and 0 <= i < self.width:
-                    self.grid[i][j] = Tile(i, j, "floor")
+                    self.grid[i][j] = Floor(i, j, "floor")
 
                     if j == room.y1:
                         self.grid[i][j] = Wall(i, j, "horizontal_wall")
@@ -37,6 +38,7 @@ class Level():
                         self.grid[i][j] = Wall(i, j, "bottom_left_corner")
                     elif (i, j) == (room.x1 + room.width - 1, room.y1 + room.height - 1):
                         self.grid[i][j] = Wall(i, j, "bottom_right_corner")
+                    room.features.append([(i, j), self.grid[i][j]])
 
     def create_grid(self):
         return [[Tile(x, y, "backdrop") for y in range(self.height)] for x in range(self.width)]
@@ -57,7 +59,6 @@ class Level():
 
         stdscr.refresh()
 
-
     def addRoom(self):
         attempts = 0
         while attempts < 100:
@@ -66,15 +67,14 @@ class Level():
             x1 = random.randint(1, self.width - width - 1)
             y1 = random.randint(1, self.height - height - 1)
             
-            room = Room(x1, y1, width, height)
-            if self.is_valid_placement(room):
+            room = Room(x1, y1, width, height, self.depth)
+            if self.is_valid_room_placement(room):
                 self.rooms_placed.append(room)
                 self.tile_room(room)
                 return True
         return False
         
-
-    def is_valid_placement(self, new_room, buffer = 3):
+    def is_valid_room_placement(self, new_room, buffer = 3):
         for room in self.rooms_placed:
             if (new_room.x1 < room.x1 + room.width + buffer and
                     new_room.x1 + new_room.width + buffer > room.x1 and
@@ -84,7 +84,7 @@ class Level():
                 return False
         # No overlap with any existing Room
         return True
-    
+
 
     def sort_rooms(self):
         self.rooms_placed = sorted(self.rooms_placed, key=lambda room: (room.x1, room.y1))
@@ -138,6 +138,7 @@ class Level():
                 room.doors.append(door)
                 x, y = door.pos
                 self.grid[x][y] = door
+                room.features.append([door.pos, door])
 
 
     def calculate_room_distances(self):
@@ -200,7 +201,6 @@ class Level():
         for x, y in corridor:
             self.grid[x][y] = Tile(x, y, 'corridor')
     
-
     def add_stairs(self):
         if len(self.rooms_placed) < 2:
             raise ValueError("Not enough rooms to place stairs")
@@ -213,13 +213,37 @@ class Level():
         up_stair_y = random.randint(up_stair_room.y1 + 1, up_stair_room.y1 + up_stair_room.height - 2)
         self.grid[up_stair_x][up_stair_y] = Stair(up_stair_x, up_stair_y, 'up')
         self.up_stair = self.grid[up_stair_x][up_stair_y]
+        up_stair_room.features.append([(up_stair_x, up_stair_y), self.up_stair])
 
         # Place a down-stair in a random tile in another room
         down_stair_x = random.randint(down_stair_room.x1 + 1, down_stair_room.x1 + down_stair_room.width - 2)
         down_stair_y = random.randint(down_stair_room.y1 + 1, down_stair_room.y1 + down_stair_room.height - 2)
         self.grid[down_stair_x][down_stair_y] = Stair(down_stair_x, down_stair_y, 'down')
         self.down_stair = self.grid[down_stair_x][down_stair_y]
+        down_stair_room.features.append([(down_stair_x, down_stair_y), self.down_stair])
         
+    def add_feature(self, room, pos=None, feature=None):
+        # If pos is not specified, pick a random spot not adjacent to doors
+        if pos is None:
+            non_adjacent_floor_locations = room.get_non_door_adjacent_floor_locations()
+            if non_adjacent_floor_locations:
+                pos = random.choice(non_adjacent_floor_locations)
+                
+            else:
+                #No suitable position found for feature placement
+                raise ValueError(f'{len(room.get_feature_locations(Floor))}')
+
+        # If feature is specified but pos is not, update the position of the feature
+        if feature is not None and pos is not None:
+            feature.pos = pos
+        else:
+            # If feature is not specified, create it using the generated pos
+            feature = Feature(*pos)
+
+        # Append the created or updated feature to the room's features
+        room.features.append(feature)
+        self.grid[pos[0]][pos[1]] = feature.tile
+
 
 def generate_level(map_width, map_height, room_threshold, depth):
 
@@ -232,6 +256,8 @@ def generate_level(map_width, map_height, room_threshold, depth):
     level.add_doors()
     level.add_corridors()
     level.add_stairs()
+    for room in level.rooms_placed:
+        level.add_feature(room)
     return level
 
 
