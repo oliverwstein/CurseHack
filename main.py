@@ -58,6 +58,7 @@ class Game:
         self.player = Unit(*self.active_level.up_stair.pos, role = 'Wizard', race = 'Human', char  = '@')
         self.action_message = "What's the move, boss?"
         self.current_action = None
+        self.turn = 1
 
     def set_action_message(self, message):
         self.action_message = message
