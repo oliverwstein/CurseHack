@@ -17,7 +17,7 @@ class Game:
         self.game_map = self.active_level.grid
         self.dungeon = dict({self.depth:self.active_level})
 
-        self.player = Unit(*self.active_level.up_stair.pos(), role = 'Wizard', race = 'Human', char  = '@')
+        self.player = Unit(*self.active_level.up_stair.pos, role = 'Wizard', race = 'Human', char  = '@')
         self.action_message = "What's the move, boss?"
         self.current_action = None
 
@@ -37,15 +37,26 @@ class Game:
             action.Climb(self, key)
 
     def render_map(self):
-        for y, row in enumerate(self.game_map):
-            for x, tile in enumerate(row):
-                self.stdscr.addch(y, x, tile.char)
+        for x, column in enumerate(self.game_map):
+            for y, tile in enumerate(column):
+                # Ensure x, y are within the bounds of the stdscr dimensions
+                if 0 <= y < curses.LINES and 0 <= x < curses.COLS:
+                    try:
+                        self.stdscr.addch(y, x, tile.char)
+                    except curses.error:
+                        pass  # Ignore curses error if a character cannot be added
 
-        self.stdscr.addch(self.player.y, self.player.x, self.player.char)
+        # Ensure the player's position is within the bounds before drawing
+        player_x, player_y = self.player.pos
+        if 0 <= player_y < curses.LINES and 0 <= player_x < curses.COLS:
+            try:
+                self.stdscr.addch(player_y, player_x, self.player.char)
+            except curses.error:
+                pass  # Ignore curses error if a character cannot be added
         
     def render_status_text(self):
         # Define the row from which to start displaying the text
-        start_row = len(self.game_map)
+        start_row = len(self.game_map[0])
 
         # Example status text, you can modify this based on the game state
         status_text = f"{self.player.race} {self.player.role} | Player Level: {self.player.grade} | Depth: {self.depth}"
@@ -59,7 +70,7 @@ class Game:
 
     def render_action_message(self):
         # Define where to render the status message
-        message_row = len(self.game_map) + 1 
+        message_row = len(self.game_map[0]) + 1 
 
         # Clear the previous message
         self.stdscr.move(message_row, 0)
@@ -79,6 +90,8 @@ class Game:
             self.stdscr.refresh()
 
 def main(stdscr):
+    curses.start_color()
+    curses.use_default_colors()
     game = Game(stdscr)
     game.run_game()
 

@@ -24,7 +24,7 @@ class Move(Action):
             self.move(self.game.player, direction)
     
     def move(self, unit, direction):
-        new_x, new_y = unit.x, unit.y
+        new_x, new_y = unit.pos
 
         if direction == "right":
             new_x += 1
@@ -37,18 +37,18 @@ class Move(Action):
 
         # Check if the move is legal before updating the unit's position
         if self.is_move_legal(new_x, new_y):
-            unit.x, unit.y = new_x, new_y
+            unit.pos = new_x, new_y
 
-        elif isinstance(self.game.game_map[new_y][new_x], level.Door):
+        elif isinstance(self.game.game_map[new_x][new_y], level.Door):
             self.game.set_action_message("The door is closed. Press 'o' to try opening it.")
 
     def is_move_legal(self, x, y):
         # Check the bounds of the map
-        if x < 0 or y < 0 or x >= len(self.game.game_map[0]) or y >= len(self.game.game_map):
+        if x < 0 or y < 0 or x >= len(self.game.game_map) or y >= len(self.game.game_map[0]):
             return False
 
         # Check if the tile is walkable
-        return self.game.game_map[y][x].walkable
+        return self.game.game_map[x][y].walkable
     
 class Climb(Action):
     def execute(self, key):
@@ -62,15 +62,14 @@ class Climb(Action):
             self.try_climb(direction)
     
     def try_climb(self, direction):
-        x, y = self.game.player.pos()
-        if self.game.game_map[y][x].tile_type == direction:
+        x, y = self.game.player.pos
+        if self.game.game_map[x][y].tile_type == direction:
             if direction == "down":
                 self.game.depth += 1
                 self.game.dungeon[self.game.depth] = level.generate_level(self.game.map_width, self.game.map_height, self.game.room_threshold, self.game.depth)
                 self.game.active_level = self.game.dungeon[self.game.depth]
                 self.game.game_map = self.game.active_level.grid
-                self.game.player.x = self.game.active_level.up_stair.x
-                self.game.player.y = self.game.active_level.up_stair.y
+                self.game.player.pos = self.game.active_level.up_stair.pos
                 self.game.set_action_message("Onward and downward!")
             if direction == "up":
                 if self.game.depth > 0:
@@ -78,8 +77,7 @@ class Climb(Action):
                     self.game.dungeon[self.game.depth]
                     self.game.active_level = self.game.dungeon[self.game.depth]
                     self.game.game_map = self.game.active_level.grid
-                    self.game.player.x = self.game.active_level.down_stair.x
-                    self.game.player.y = self.game.active_level.down_stair.y
+                    self.game.player.pos = self.game.active_level.down_stair.pos
                     self.game.set_action_message("Was that was too deep for you?")
             
             
@@ -112,7 +110,7 @@ class Open(Action):
             self.game.set_action_message("Invalid direction. Please use arrow keys.")
 
     def try_open(self, direction):
-        player_x, player_y = self.game.player.x, self.game.player.y
+        player_x, player_y = self.game.player.pos
         target_x, target_y = player_x, player_y
 
         if direction == "right":
@@ -124,12 +122,12 @@ class Open(Action):
         elif direction == "up":
             target_y -= 1
         # Check if there's a door in the target direction
-        if isinstance(self.game.game_map[target_y][target_x], level.Door):
-            if self.game.game_map[target_y][target_x].state == 'closed':
-                self.game.game_map[target_y][target_x].open()
+        if isinstance(self.game.game_map[target_x][target_y], level.Door):
+            if self.game.game_map[target_x][target_y].state == 'closed':
+                self.game.game_map[target_x][target_y].open()
                 self.game.set_action_message("You open the door.")
             else:
-                self.game.game_map[target_y][target_x].close()
+                self.game.game_map[target_x][target_y].close()
                 self.game.set_action_message("You close the door.")
         else:
             self.game.set_action_message("There's nothing to open in that direction.")
