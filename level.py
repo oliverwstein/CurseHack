@@ -6,7 +6,39 @@ from room import Room
 from feature import Feature
 
 class Level():
+    """
+    The `Level` class is responsible for creating and managing the layout of each level in the game.
+    It handles the generation of rooms, corridors, features, and the overall structure of the level.
 
+    Attributes:
+        width (int): The width of the level.
+        height (int): The height of the level.
+        area (int): The total area of the level.
+        room_threshold (int): The threshold for the number of rooms in the level.
+        depth (int): The depth of the level in the dungeon.
+        rooms_placed (list): A list of rooms that have been placed in the level.
+        grid (list): A 2D grid representing the level layout.
+
+    Functions:
+        __init__(width, height, room_threshold, depth): Initializes a new level with given dimensions and parameters.
+        tile_room(room): Tiles a given room within the level.
+        create_grid(): Creates the initial grid for the level.
+        render(stdscr): Renders the level on the given Curses standard screen.
+        add_room(): Attempts to add a new room to the level.
+        is_valid_room_placement(new_room, buffer): Checks if a room can be placed without overlapping existing rooms.
+        sort_rooms(): Sorts the placed rooms based on their position.
+        generate_corridor(start, end, max_corridor_length): Generates a corridor between two points.
+        add_doors(): Adds doors to the rooms in the level.
+        calculate_room_distances(): Calculates distances between rooms for corridor generation.
+        add_corridors(max_corridor_length): Adds corridors to connect the rooms using a minimum spanning tree algorithm.
+        add_corridor_to_grid(corridor): Adds a generated corridor to the level grid.
+        add_stairs(): Adds stairs to the level for transitioning between levels.
+        add_feature(room, pos, feature): Adds a feature to a specified room in the level.
+
+    Usage:
+        A `Level` object is created for each level of the dungeon. It is used to generate the layout,
+        place rooms and corridors, and manage the features within the level.
+    """
     def __init__(self, width, height, room_threshold, depth):
         self.width = width
         self.height = height
@@ -59,7 +91,7 @@ class Level():
 
         stdscr.refresh()
 
-    def addRoom(self):
+    def add_room(self):
         attempts = 0
         while attempts < 100:
             width = random.randint(5, 10)
@@ -252,7 +284,7 @@ def generate_level(map_width, map_height, room_threshold, depth):
     while space:
         if len(level.rooms_placed) >= level.room_threshold:
             break
-        level.addRoom()
+        level.add_room()
     level.add_doors()
     level.add_corridors()
     level.add_stairs()

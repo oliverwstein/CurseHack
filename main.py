@@ -6,6 +6,44 @@ from unit import *
 
 
 class Game:
+    """
+    The `Game` class serves as the core controller of the game. It manages the game loop,
+    user input, rendering of the game state, and the interactions between various game components.
+
+    Attributes:
+        stdscr: A Curses window object, representing the standard screen for the game's output.
+        map_width, map_height: Dimensions of the game map.
+        room_threshold: A randomly determined threshold for room generation within a level.
+        depth: Represents the current depth level of the dungeon.
+        active_level: An instance of `Level`, representing the current level of the dungeon.
+        game_map: The grid representation of the current level.
+        dungeon: A dictionary holding different levels of the dungeon.
+        player: An instance of `Unit`, representing the player's character.
+        action_message: A message string displayed to the player based on actions.
+        current_action: Stores the current action being executed by the player.
+
+    Functions:
+        __init__(stdscr): Initializes the game environment, sets up the first level,
+                          and prepares the player character.
+        set_action_message(message): Updates the action message displayed to the player.
+        handle_input(): Manages user input, directing to appropriate action classes or handling navigation.
+        render_map(): Renders the current state of the game map to the standard screen.
+        render_status_text(): Displays the status text, including player race, role, level, and dungeon depth.
+        render_action_message(): Shows the current action message to the player.
+        run_game(): Contains the main game loop, continuously handling input, rendering the game state,
+                    and refreshing the screen.
+
+    Interaction with Other Classes:
+        Level (`level.py`): Utilized to generate and manage the current level of the dungeon.
+        Unit (`unit.py`): Represents the player character, with its state and actions within the game.
+        Action (`action.py`): Actions like `Move`, `Open`, `Climb` are instantiated based on user input
+                              to affect the game state.
+    
+    Usage:
+        The `Game` class is instantiated and run within the `main(stdscr)` function.
+        It is the central orchestrator of the game, tying together user interactions,
+        game state management, and rendering.
+    """
     def __init__(self, stdscr):
         curses.curs_set(0)  # Hide the cursor
         self.stdscr = stdscr
