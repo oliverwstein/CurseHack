@@ -1,6 +1,6 @@
 import random
 from feature_data import FeatureData
-from tile import Water, Spring, Veg, Rock
+from tile import *
 
 class Feature:
     def __init__(self, x, y, feat=None):
@@ -14,10 +14,11 @@ class Feature:
         self._y = y
 
         # Generate a single tile based on the feature data
-        feature_info = FeatureData.features[feat]
-        self.tile = self.generate_tile(x, y, feature_info)
+        self.feature_info = FeatureData.features[feat]
+        self.tile = self.generate_tile(x, y)
 
-    def random_feature_based_on_rarity(self):
+    @staticmethod
+    def random_feature_based_on_rarity():
         # Filter out features not meant for random generation
         filtered_features = {feat: attrs for feat, attrs in FeatureData.features.items() if attrs.get('random', True)}
 
@@ -45,17 +46,18 @@ class Feature:
                 return feature
 
 
-    def generate_tile(self, x, y, feature_info):
+    def generate_tile(self, x, y):
         # Instantiate the correct Tile subclass based on feature data
-        if feature_info['tile'] == Water:
-            return Water(x, y, feature_info.get('depth', 'shallow'), feature_info.get('state', 'pool'))
-        elif feature_info['tile'] == Spring:
-            return Spring(x, y, feature_info.get('depth', 'Deep'), feature_info.get('state', 'hot'))
-        elif feature_info['tile'] == Veg:
-            return Veg(x, y, feature_info.get('variant', 'moss'))
-        elif feature_info['tile'] == Rock:
-            return Rock(x, y, feature_info.get('state', 'solid'))
+        if self.feature_info['tile'] == Water:
+            return Water(x, y, self.feature_info.get('depth', 'shallow'), self.feature_info.get('state', 'pool'))
+        elif self.feature_info['tile'] == Spring:
+            return Spring(x, y, self.feature_info.get('depth', 'Deep'), self.feature_info.get('state', 'hot'))
+        elif self.feature_info['tile'] == Veg:
+            return Veg(x, y, self.feature_info.get('variant', 'moss'))
+        elif self.feature_info['tile'] == Rock:
+            return Rock(x, y, self.feature_info.get('state', 'solid'))
         # Add other cases for different tile types if needed
+
 
     @property
     def pos(self):

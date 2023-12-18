@@ -55,7 +55,6 @@ class Game:
         self.dungeon = dict({self.depth:self.active_level})
 
         self.player = Unit(*self.active_level.up_stair.pos, role = 'Wizard', race = 'Human', char  = '@')
-        self.monsters = []
         self.action_message = "What's the move, boss?"
         self.current_action = None
         self.turn = 1
@@ -94,7 +93,7 @@ class Game:
                 pass  # Ignore curses error if a character cannot be added
         
         # Render each monster
-        for monster in self.monsters:
+        for monster in self.active_level.monsters:
             monster_x, monster_y = monster.pos
             if 0 <= monster_y < curses.LINES and 0 <= monster_x < curses.COLS:
                 try:
@@ -142,13 +141,13 @@ class Game:
 
     def end_turn(self):
         self.player.actions = self.player.calculate_actions()
-        for monster in self.monsters:
+        for monster in self.active_level.monsters:
             monster.actions = monster.calculate_actions()
         self.turn += 1
     
     def npc_actions(self):
-        while any(monster.actions > 0 for monster in self.monsters):
-            for monster in self.monsters:
+        while any(monster.actions > 0 for monster in self.active_level.monsters):
+            for monster in self.active_level.monsters:
                 if monster.actions > 0:
                     monster.take_action()
                     monster.actions -= 1

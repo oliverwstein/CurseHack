@@ -25,28 +25,35 @@ class Monster:
     data from the MonsterData class and sets its own attributes based on this data.
 
     Attributes:
-        name (str): The name of the monster, used to fetch data from MonsterData.
-        char (str): A symbol representing the monster type.
-        level (int): The base level of the monster.
-        exp (int): The base experience points the monster provides.
-        speed (int): The base speed of the monster.
-        armor_class (int): The base armor class of the monster.
-        magic_resistance (int): The base magic resistance of the monster.
-        size (str): The size category of the monster.
-        weight (int): The weight of the monster.
-        nutrition (int): The nutritional value of the monster.
-        attacks (tuple): A tuple of Attack objects representing the monster's attacks.
-        resists (tuple): A tuple of resistances that the monster has.
-        resists_conveyed (tuple): A tuple of resistances that the monster can convey.
-        geno (tuple): Genetic flags related to monster generation.
-        traits (tuple): A tuple of traits or behaviors of the monster.
-        color (str): The color of the monster.
+        - name (str): The display name of the monster.
+        - char (str): A symbol representing the monster type.
+        - level (int): The base level of the monster.
+        - exp (int): The base experience provided by the monster.
+        - speed (int): The base speed of the monster.
+        - ac (int): The base armor class of the monster.
+        - mr (int): The base magic resistance of the monster.
+        - align (int): The alignment of the monster.
+        - freq (int): The frequency of the monster's occurrence.
+        - weight (int): The weight of the monster.
+        - nutrition (int): The nutritional value of the monster.
+        - size (str): The size category of the monster.
+        - color (str): The color of the monster.
+        - attacks (tuple): A tuple of attack types and their effects.
+        - resists (tuple): A tuple of resistances that the monster has.
+        - resists_conveyed (tuple): A tuple of resistances that the monster can convey.
+        - geno (tuple): Genetic flags related to monster generation.
+        - traits (tuple): A tuple of traits or behaviors of the monster.
 
     Usage:
         Monster instances are created to represent individual monsters in the game, 
         each with their own set of attributes and abilities as defined in MonsterData.
     """
-    def __init__(self, name):
+    def __init__(self, x, y, name = None):
+        self._x = x
+        self._y = y
+        if name is None:
+            name = self.random_monster_based_on_rarity()
+
         if name not in MonsterData.monsters:
             raise ValueError(f"Unknown monster name: {name}")
 
@@ -56,9 +63,11 @@ class Monster:
         self.char = monster_data["char"]
         self.level = monster_data["level"]
         self.exp = monster_data["level"]
-        self.speed = monster_data["alignment"]
+        self.speed = monster_data["speed"]
         self.armor_class = monster_data["ac"]
         self.magic_resistance  = monster_data["mr"]
+        self.align  = monster_data["align"]
+        self.freq  = monster_data["freq"]
         self.size = monster_data["size"]
         self.weight = monster_data["weight"]
         self.nutrition = monster_data["nutrition"]
@@ -69,6 +78,37 @@ class Monster:
         self.traits = monster_data["traits"]
         self.color = monster_data["color"]
         self.actions = self.calculate_actions()
+    @staticmethod
+    def random_monster_based_on_rarity(monster_names=None):
+        if monster_names is None:
+            # Filter only the specified monsters that are eligible for random generation
+            filtered_monsters = {name: attrs for name, attrs in MonsterData.monsters.items() if "G_RANDOM" in attrs.get("geno", [])}
+        else:
+            lured_monsters = {key: MonsterData.monsters[key] for key in monster_names if key in  MonsterData.monsters}
+            # Filter only the specified monsters that are eligible for random generation
+            filtered_monsters = {name: attrs for name, attrs in lured_monsters.items() if "G_RANDOM" in attrs.get("geno", [])}
+            if len(filtered_monsters) == 0 :
+                filtered_monsters = {name: attrs for name, attrs in MonsterData.monsters.items() if "G_RANDOM" in attrs.get("geno", [])}
+
+        
+        # Group monsters by rarity
+        rarity_groups = {}
+        for name, attrs in filtered_monsters.items():
+            rarity = attrs['freq']  # Assuming 'freq' indicates rarity
+            rarity_groups.setdefault(rarity, []).append(name)
+        # Calculate weights for each rarity group and normalize within the group
+    
+        normalized_weights = {}
+        for rarity, monsters in rarity_groups.items():
+            group_weight = 1 / (2 ** rarity)
+            weight_per_monster = group_weight / len(monsters)
+            for monster in monsters:
+                normalized_weights[monster] = weight_per_monster
+
+        options, weights = zip(*normalized_weights.items())
+    
+        return random.choices(options, weights, k=1)[0]
+
     
 
     def calculate_actions(self):
@@ -84,6 +124,19 @@ class Monster:
     def calculate_speed(self):
         # Modify speed based on factors like status effects
         return self.speed
+
+    def take_action(self):
+        pass
+
+    @property
+    def pos(self):
+        return (self._x, self._y)
+
+    @pos.setter
+    def pos(self, xy):
+        if not isinstance(xy, tuple) or len(xy) != 2:
+            raise ValueError("Position must be a tuple of two elements: (x, y)")
+        self._x, self._y = xy
 
 
 
