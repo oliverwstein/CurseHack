@@ -1,4 +1,5 @@
 from monster_data import MonsterData
+import random
 
 class Attack:
     """
@@ -67,3 +68,20 @@ class Monster:
         self.geno = monster_data["geno"]
         self.traits = monster_data["traits"]
         self.color = monster_data["color"]
+        self.actions = self.calculate_actions()
+    
+
+    def calculate_actions(self):
+        # Divide speed by 12 and separate the integer and fractional parts
+        baseline_actions, fractional_chance = divmod(self.speed, 12)
+
+        # Check if the fractional part warrants an extra action
+        if random.random() < fractional_chance / 12:
+            return baseline_actions + 1
+        else:
+            return baseline_actions
+
+    def calculate_speed(self):
+        # Modify speed based on factors like status effects
+        return self.speed
+

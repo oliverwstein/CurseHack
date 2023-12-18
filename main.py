@@ -56,6 +56,7 @@ class Game:
         self.dungeon = dict({self.depth:self.active_level})
 
         self.player = Unit(*self.active_level.up_stair.pos, role = 'Wizard', race = 'Human', char  = '@')
+        self.monsters = []
         self.action_message = "What's the move, boss?"
         self.current_action = None
         self.turn = 1
@@ -127,6 +128,22 @@ class Game:
             self.render_status_text()
             self.render_action_message()
             self.stdscr.refresh()
+            if self.player.actions == 0:
+                self.end_turn()
+                self.npc_actions()
+
+    def end_turn(self):
+        self.player.actions = unit.calculate_actions()
+        for monster in self.monsters:
+            monster.actions = monster.calculate_actions()
+        self.turn += 1
+    
+    def npc_actions(self):
+        while any(monster.actions > 0 for monster in self.monsters):
+            for monster in self.monsters:
+                if monster.actions > 0:
+                    monster.take_action()
+                    monster.actions -= 1
 
 def main(stdscr):
     curses.start_color()

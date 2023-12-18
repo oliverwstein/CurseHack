@@ -125,6 +125,7 @@ class Open(Action):
             # Handle the directional input for the 'open' action
             self.handle_directional_open(key)
             self.game.current_action = None
+        self.game.player.actions -= 1
 
     def handle_directional_open(self, key):
         direction = ""

@@ -41,6 +41,23 @@ class Unit:
                         self.growths[stat] = 0
                     break
 
+        self.speed = 12  # Default speed
+        self.actions = self.calculate_actions()
+
+    def calculate_actions(self):
+        # Divide speed by 12 and separate the integer and fractional parts
+        baseline_actions, fractional_chance = divmod(self.speed, 12)
+
+        # Check if the fractional part warrants an extra action
+        if random.random() < fractional_chance / 12:
+            return baseline_actions + 1
+        else:
+            return baseline_actions
+
+    def calculate_speed(self):
+        # Modify speed based on factors like status effects
+        return self.speed
+
     @property
     def pos(self):
         return (self._x, self._y)
