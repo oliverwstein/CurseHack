@@ -4,7 +4,6 @@ import random
 import action
 from unit import *
 
-
 class Game:
     """
     The `Game` class serves as the core controller of the game. It manages the game loop,
@@ -99,7 +98,7 @@ class Game:
         start_row = len(self.game_map[0])
 
         # Example status text, you can modify this based on the game state
-        status_text = f"{self.player.race} {self.player.role} | Player Level: {self.player.grade} | Depth: {self.depth}"
+        status_text = f"{self.player.race} {self.player.role} | Player Level: {self.player.grade} | Depth: {self.depth} | Turn: {self.turn}"
 
         # Clear the previous status text
         self.stdscr.move(start_row, 0)
@@ -129,11 +128,11 @@ class Game:
             self.render_action_message()
             self.stdscr.refresh()
             if self.player.actions == 0:
-                self.end_turn()
                 self.npc_actions()
+                self.end_turn()
 
     def end_turn(self):
-        self.player.actions = unit.calculate_actions()
+        self.player.actions = self.player.calculate_actions()
         for monster in self.monsters:
             monster.actions = monster.calculate_actions()
         self.turn += 1

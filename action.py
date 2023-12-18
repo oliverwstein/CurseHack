@@ -41,6 +41,7 @@ class Move(Action):
 
         if direction:
             self.move(self.game.player, direction)
+            self.game.player.actions -= 1
     
     def move(self, unit, direction):
         new_x, new_y = unit.pos
@@ -86,6 +87,7 @@ class Climb(Action):
 
         if direction:
             self.try_climb(direction)
+        self.game.player.actions -= 1
     
     def try_climb(self, direction):
         x, y = self.game.player.pos
