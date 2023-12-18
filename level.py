@@ -4,6 +4,8 @@ from tile import *
 import kruskal
 from room import Room
 from feature import Feature
+from monster import *
+from monster_data import *
 
 class Level():
     """
@@ -47,6 +49,7 @@ class Level():
         self.depth = depth
         self.rooms_placed = []
         self.grid = self.create_grid()
+        self.monsters = []
 
 
     def tile_room(self, room):
@@ -117,10 +120,8 @@ class Level():
         # No overlap with any existing Room
         return True
 
-
     def sort_rooms(self):
         self.rooms_placed = sorted(self.rooms_placed, key=lambda room: (room.x1, room.y1))
-
 
     def generate_corridor(self, start, end, max_corridor_length):
         corridor_path = []
@@ -162,7 +163,6 @@ class Level():
 
         return corridor_path
 
-
     def add_doors(self):
         for room in self.rooms_placed:
             for side in ['top', 'bottom', 'left', 'right']:
@@ -171,7 +171,6 @@ class Level():
                 x, y = door.pos
                 self.grid[x][y] = door
                 room.features.append([door.pos, door])
-
 
     def calculate_room_distances(self):
         rooms = self.rooms_placed
@@ -199,7 +198,6 @@ class Level():
                         room_distances[(i, j)] = best_doors + (shortest_distance, shortest_corridor)
 
         return room_distances
-
 
     def add_corridors(self, max_corridor_length=15):
         uf = kruskal.UnionFind(len(self.rooms_placed))
@@ -254,7 +252,7 @@ class Level():
         self.down_stair = self.grid[down_stair_x][down_stair_y]
         down_stair_room.features.append([(down_stair_x, down_stair_y), self.down_stair])
         
-    def add_feature(self, room, pos=None, feature=None):
+    def add_feature(self, room:Room, pos=None, feature=None):
         # If pos is not specified, pick a random spot not adjacent to doors
         if pos is None:
             non_adjacent_floor_locations = room.get_non_door_adjacent_floor_locations()
@@ -275,6 +273,58 @@ class Level():
         # Append the created or updated feature to the room's features
         room.features.append(feature)
         self.grid[pos[0]][pos[1]] = feature.tile
+        return feature
+
+    def generate_monsters(self, feature:Feature, pos = None, mon = None, count = 1):
+
+        if pos is None:
+            pos = feature.pos
+        if mon == None:
+            lured_monsters = set()
+            for lure in feature.feature_info['lures']:
+                for monster in MonsterData.monsters:
+                    if lure in MonsterData.monsters[monster]['traits']:
+                        lured_monsters.add(monster)
+
+            mon = Monster.random_monster_based_on_rarity(lured_monsters)
+
+        # Get the data for the chosen monster
+        monster_data = MonsterData.monsters[mon]
+
+        monsters = []
+        # Check if the monster's "geno" attribute contains the "G_SGROUP" flag
+        if "G_SGROUP" in monster_data["geno"]:
+            count = random.randint(1, 3)
+        nearby_tiles = self.get_nearby_tiles(pos = pos, radius = 2, type = Floor)
+
+        if len(nearby_tiles) <= count:
+                chosen_tiles = nearby_tiles
+        chosen_tiles = random.sample(nearby_tiles, count)
+        # Generate a monster with the "mon" name in each tile
+        for tile in chosen_tiles:
+            monsters.append(Monster(*tile.pos, mon))
+
+        return monsters
+    
+    def get_nearby_tiles(self, pos:tuple, radius:int, type:Tile):
+        """Return a list of the tiles of Tile subclass tyle 
+        within radius of pos."""
+        nearby_tiles = []
+        x_center, y_center = pos
+
+        # Iterate through each tile within the radius
+        for x in range(x_center - radius, x_center + radius + 1):
+            for y in range(y_center - radius, y_center + radius + 1):
+                # Check if the tile is within the bounds of the map
+                if 0 <= x < self.width and 0 <= y < self.height:
+                    tile = self.grid[x][y]
+                    # Check if the tile is an instance of the specified Tile subclass
+                    if isinstance(tile, type):
+                        nearby_tiles.append(tile)
+
+        return nearby_tiles
+
+
 
 
 def generate_level(map_width, map_height, room_threshold, depth):
@@ -289,7 +339,8 @@ def generate_level(map_width, map_height, room_threshold, depth):
     level.add_corridors()
     level.add_stairs()
     for room in level.rooms_placed:
-        level.add_feature(room)
+        feature = level.add_feature(room)
+        level.monsters += level.generate_monsters(feature)
     return level
 
 

@@ -6,7 +6,7 @@ class MonsterData:
         monsters (dict): A dictionary where each key is a unique monster identifier (e.g., "giant_ant", "python") and each value is a dictionary containing the intrinsic properties of that monster type. These properties include:
 
         - name (str): The display name of the monster.
-        - symbol (str): A symbol representing the monster type.
+        - char (str): A symbol representing the monster type.
         - level (int): The base level of the monster.
         - exp (int): The base experience provided by the monster.
         - speed (int): The base speed of the monster.
@@ -30,14 +30,14 @@ class MonsterData:
     monsters = {
         "giant_ant": {
             "name": "giant ant",
-            "symbol": 'a',
+            "char": 'a',
             "level": 2,
             "exp": 18,
             "speed": 3, 
             "ac": 0,
             "mr": 0,
-            "alignment": 0,
-            "frequency": 3,
+            "align": 0,
+            "freq": 3,
             "weight": 10,
             "nutrition": 10,
             "size": "tiny",
@@ -45,19 +45,19 @@ class MonsterData:
             "attacks": (('AT_BITE', 'AD_PHYS', 1, 4)),
             "resists": (),
             "resists_conveyed": (),
-            "geno": ("G_GENO", "G_SGROUP"),
+            "geno": ("G_GENO", "G_SGROUP", "G_RANDOM"),
             "traits": ('TR_ANIMAL', 'TR_NOHANDS', 'TR_OVIPAROUS', 'TR_CARNIVORE')
             },
         "python": {
             "name": "python",
-            "symbol": 'S',
+            "char": 'S',
             "level": 6,
             "exp": 82,
             "speed": 3, 
             "ac": 5,
             "mr": 0,
-            "alignment": 0,
-            "frequency": 3,
+            "align": 0,
+            "freq": 3,
             "weight": 250,
             "nutrition": 100,
             "size": "large",
@@ -66,7 +66,7 @@ class MonsterData:
                         ('AT_HUGS', 'AD_WRAP', 1, 4), ('AT_HUGS', 'AD_PHYS', 2, 4)),
             "resists": (),
             "resists_conveyed": (),
-            "geno": ("G_GENO"),
+            "geno": ("G_GENO", "G_RANDOM"),
             "traits": ('TR_SWIM', 'TR_NOLIMBS', 'TR_ANIMAL', 'TR_SLITHY', 'TR_CARNIVORE',
                         'TR_OVIPAROUS', 'TR_NOTAKE', 'TR_HOSTILE', 'TR_STRONG')
         },

@@ -4,7 +4,6 @@ import random
 import action
 from unit import *
 
-
 class Game:
     """
     The `Game` class serves as the core controller of the game. It manages the game loop,
@@ -93,12 +92,21 @@ class Game:
             except curses.error:
                 pass  # Ignore curses error if a character cannot be added
         
+        # Render each monster
+        for monster in self.active_level.monsters:
+            monster_x, monster_y = monster.pos
+            if 0 <= monster_y < curses.LINES and 0 <= monster_x < curses.COLS:
+                try:
+                    self.stdscr.addch(monster_y, monster_x, monster.char)
+                except curses.error:
+                    pass  # Ignore curses error if a character cannot be added
+        
     def render_status_text(self):
         # Define the row from which to start displaying the text
         start_row = len(self.game_map[0])
 
         # Example status text, you can modify this based on the game state
-        status_text = f"{self.player.race} {self.player.role} | Player Level: {self.player.grade} | Depth: {self.depth}"
+        status_text = f"{self.player.race} {self.player.role} | Player Level: {self.player.grade} | Depth: {self.depth} | Turn: {self.turn}"
 
         # Clear the previous status text
         self.stdscr.move(start_row, 0)
@@ -127,6 +135,22 @@ class Game:
             self.render_status_text()
             self.render_action_message()
             self.stdscr.refresh()
+            if self.player.actions == 0:
+                self.npc_actions()
+                self.end_turn()
+
+    def end_turn(self):
+        self.player.actions = self.player.calculate_actions()
+        for monster in self.active_level.monsters:
+            monster.actions = monster.calculate_actions()
+        self.turn += 1
+    
+    def npc_actions(self):
+        while any(monster.actions > 0 for monster in self.active_level.monsters):
+            for monster in self.active_level.monsters:
+                if monster.actions > 0:
+                    monster.take_action()
+                    monster.actions -= 1
 
 def main(stdscr):
     curses.start_color()

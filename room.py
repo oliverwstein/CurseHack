@@ -1,5 +1,7 @@
 import random
 from tile import *
+from monster import *
+from monster_data import *
 
 class Room:
     """
@@ -56,7 +58,7 @@ class Room:
     def generate_feature(self, pos=None, feature=None):
         # Generate a position if not provided, ensuring it doesn't block a door
         if pos is None:
-            pos = self.random_free_spot()
+            pos = self.random_spot(self.get_non_door_adjacent_floor_locations())
 
         # Create the Feature object with the provided or randomly chosen feature
         new_feature = Feature(*pos, feature)
@@ -91,3 +93,18 @@ class Room:
 
         return non_adjacent_floor_locations
 
+    def random_spot(self, options=[]):
+        # If the list of options is empty, pick a random floor tile
+        if not options:
+            options = self.get_feature_locations(Floor)
+        
+        # Check if options list is still empty after trying to get floor locations
+        if not options:
+            raise ValueError("No available spots to choose from.")
+
+        # Return a random tuple from options
+        return random.choice(options)
+
+    def generate_monster(self, pos = None, monster = None):
+        #TODO
+        pass

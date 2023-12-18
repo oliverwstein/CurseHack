@@ -6,28 +6,33 @@ class FeatureData:
             'state': 'closed',
             'color': 'black',
             'random': False,
+            'lures': [],
         },
         'stair': {
             'tile': Stair,
             'state': 'up',
             'color': 'black',
             'random': False,
+            'lures': [],
         },
         'stair': {
             'tile': Stair,
             'state': 'down',
             'color': 'black',
             'random': False,
+            'lures': [],
         },
         'floor': {
             'tile': Floor,
             'color': 'black',
             'random': False,
+            'lures': [],
         },
         'wall': {
             'tile': Wall,
             'color': 'black',
             'random': False,
+            'lures': [],
         },
         'spring': {
             'tile': Water,
@@ -36,6 +41,7 @@ class FeatureData:
             'color': 'blue',
             'random': True,
             'rarity': 3,
+            'lures': ['TR_SWIM'],
         },
         'hot_spring': {
             'tile': Water,
@@ -44,6 +50,7 @@ class FeatureData:
             'color': 'cyan',
             'random': True,
             'rarity': 3,
+            'lures': [],
         },
         'pool': {
             'tile': Water,
@@ -52,6 +59,7 @@ class FeatureData:
             'color': 'blue',
             'random': True,
             'rarity': 2,
+            'lures': ['TR_SWIM'],
         },
         'stag_pool': {
             'tile': Water,
@@ -60,12 +68,14 @@ class FeatureData:
             'color': 'blue',
             'random': True,
             'rarity': 2,
+            'lures': ['TR_SWIM'],
         },
         'rock': {
             'tile': Rock,
             'color': 'gray',
             'random': True,
             'rarity': 1,
+            'lures': [],
         },
 
     }
