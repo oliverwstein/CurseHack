@@ -26,7 +26,7 @@ class Monster:
 
     Attributes:
         name (str): The name of the monster, used to fetch data from MonsterData.
-        symbol (str): A symbol representing the monster type.
+        char (str): A symbol representing the monster type.
         level (int): The base level of the monster.
         exp (int): The base experience points the monster provides.
         speed (int): The base speed of the monster.
@@ -53,7 +53,7 @@ class Monster:
         monster_data = MonsterData.monsters[name]
 
         self.name = name
-        self.symbol = monster_data["symbol"]
+        self.char = monster_data["char"]
         self.level = monster_data["level"]
         self.exp = monster_data["level"]
         self.speed = monster_data["alignment"]
@@ -84,4 +84,6 @@ class Monster:
     def calculate_speed(self):
         # Modify speed based on factors like status effects
         return self.speed
+
+
 

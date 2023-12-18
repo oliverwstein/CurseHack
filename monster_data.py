@@ -6,7 +6,7 @@ class MonsterData:
         monsters (dict): A dictionary where each key is a unique monster identifier (e.g., "giant_ant", "python") and each value is a dictionary containing the intrinsic properties of that monster type. These properties include:
 
         - name (str): The display name of the monster.
-        - symbol (str): A symbol representing the monster type.
+        - char (str): A symbol representing the monster type.
         - level (int): The base level of the monster.
         - exp (int): The base experience provided by the monster.
         - speed (int): The base speed of the monster.
@@ -30,7 +30,7 @@ class MonsterData:
     monsters = {
         "giant_ant": {
             "name": "giant ant",
-            "symbol": 'a',
+            "char": 'a',
             "level": 2,
             "exp": 18,
             "speed": 3, 
@@ -50,7 +50,7 @@ class MonsterData:
             },
         "python": {
             "name": "python",
-            "symbol": 'S',
+            "char": 'S',
             "level": 6,
             "exp": 82,
             "speed": 3, 

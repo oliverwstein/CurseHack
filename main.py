@@ -93,6 +93,15 @@ class Game:
             except curses.error:
                 pass  # Ignore curses error if a character cannot be added
         
+        # Render each monster
+        for monster in self.monsters:
+            monster_x, monster_y = monster.pos
+            if 0 <= monster_y < curses.LINES and 0 <= monster_x < curses.COLS:
+                try:
+                    self.stdscr.addch(monster_y, monster_x, monster.char)
+                except curses.error:
+                    pass  # Ignore curses error if a character cannot be added
+        
     def render_status_text(self):
         # Define the row from which to start displaying the text
         start_row = len(self.game_map[0])
