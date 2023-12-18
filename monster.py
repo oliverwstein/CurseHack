@@ -1,4 +1,5 @@
 from monster_data import MonsterData
+from action import *
 import random
 
 class Attack:
@@ -125,8 +126,10 @@ class Monster:
         # Modify speed based on factors like status effects
         return self.speed
 
-    def take_action(self):
-        pass
+    def take_action(self, game):
+        # Currently, the monsters just move around.
+        key = random.choice([curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_UP, curses.KEY_DOWN])
+        Move(game, key, self)
 
     @property
     def pos(self):

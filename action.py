@@ -28,6 +28,11 @@ class Move(Action):
         move(unit, direction): Moves the specified unit in the given direction if the move is legal.
         is_move_legal(x, y): Checks if a move to the specified coordinates is legal.
     """
+    def __init__(self, game, key, obj):
+        self.unit = obj
+        super().__init__(game, key)
+        
+
     def execute(self, key):
         direction = ""
         if key == curses.KEY_RIGHT:
@@ -40,11 +45,11 @@ class Move(Action):
             direction = "up"
 
         if direction:
-            self.move(self.game.player, direction)
-            self.game.player.actions -= 1
+            self.move(direction)
+            self.unit.actions -= 1
     
-    def move(self, unit, direction):
-        new_x, new_y = unit.pos
+    def move(self, direction):
+        new_x, new_y = self.unit.pos
 
         if direction == "right":
             new_x += 1
@@ -57,7 +62,7 @@ class Move(Action):
 
         # Check if the move is legal before updating the unit's position
         if self.is_move_legal(new_x, new_y):
-            unit.pos = new_x, new_y
+            self.unit.pos = new_x, new_y
 
         elif isinstance(self.game.game_map[new_x][new_y], level.Door):
             self.game.set_action_message("The door is closed. Press 'o' to try opening it.")

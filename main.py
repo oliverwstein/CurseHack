@@ -68,7 +68,7 @@ class Game:
         if self.current_action:
             self.current_action.execute(key)
         elif key in [curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_UP, curses.KEY_DOWN]:
-            action.Move(self, key)
+            action.Move(self, key, self.player)
         elif key == ord('o'):
             action.Open(self, key)
         elif key in [ord('<'), ord('>')]:
@@ -129,12 +129,12 @@ class Game:
 
     def run_game(self):
         while True:
-            self.handle_input()
             self.stdscr.clear()
             self.render_map()
             self.render_status_text()
             self.render_action_message()
             self.stdscr.refresh()
+            self.handle_input()
             if self.player.actions == 0:
                 self.npc_actions()
                 self.end_turn()
@@ -149,7 +149,7 @@ class Game:
         while any(monster.actions > 0 for monster in self.active_level.monsters):
             for monster in self.active_level.monsters:
                 if monster.actions > 0:
-                    monster.take_action()
+                    monster.take_action(self)
                     monster.actions -= 1
 
 def main(stdscr):
