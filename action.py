@@ -1,4 +1,5 @@
 import curses
+import random
 import level
 from unit import Unit
 from tile import *
@@ -199,13 +200,14 @@ class Attack(Action):
         num_sides (int): The number of sides on each die used for the damage roll.
     """
     
-    def __init__(self, game, key, obj):
-        self.unit = obj
+    def __init__(self, game, key, obj, attack:tuple):
+        self.obj = obj
+        self.subj = None
         super().__init__(game, key)
-        # self.attack_type = attack[0]  # Type of attack (e.g., bite, claw)
-        # self.damage_type = attack[1]  # Type of damage (e.g., physical, fire)
-        # self.num_dice = attack[2]        # Number of dice to roll for damage
-        # self.num_sides = attack[3]      # Number of sides on each die
+        self.attack_type = attack[0]  # Type of attack (e.g., bite, claw)
+        self.damage_type = attack[1]  # Type of damage (e.g., physical, fire)
+        self.num_dice = attack[2]        # Number of dice to roll for damage
+        self.num_sides = attack[3]      # Number of sides on each die
     
     def execute(self, key):
         if key == ord('a'):
@@ -215,7 +217,6 @@ class Attack(Action):
             # Handle the directional input for the 'attack' action
             self.handle_directional_attack(key)
             self.game.current_action = None
-        self.unit.actions -= 1
 
     def handle_directional_attack(self, key):
         direction = ""
@@ -235,7 +236,7 @@ class Attack(Action):
             self.game.set_action_message("Invalid direction. Please use arrow keys.")
 
     def try_attack(self, direction):
-        unit_x, unit_y = self.unit.pos
+        unit_x, unit_y = self.obj.pos
         target_x, target_y = unit_x, unit_y
 
         if direction == "right":
@@ -246,10 +247,43 @@ class Attack(Action):
             target_y += 1
         elif direction == "up":
             target_y -= 1
+        self.subj = self.game.tiles[target_x][target_y].occupant
+        if self.subj is None:
+            self.subj = self.game.tiles[target_x][target_y]
         # Check if an actionable object is in the target direction
-        if isinstance(self.game.tiles[target_x][target_y].occupant, (Unit, Monster)):
+        if isinstance(self.subj, (Unit, Monster)):
             self.game.set_action_message("Take that, you rogue!")
-        elif isinstance(self.game.tiles[target_x][target_y], (Wall)):
+            damage = self.strike()
+            if damage == 0:
+                self.game.set_action_message("A clever ruse!")
+            else:
+                self.game.set_action_message(f"Take {damage}, you beast!")
+                self.subj.hp -= damage
+                if not self.subj.alive():
+                    self.game.set_action_message(f"The beast is slain!")
+        elif isinstance(self.subj, (Wall)):
             self.game.set_action_message("Just another brick in the wall, eh?")
         else:
             self.game.set_action_message("There's nothing to attack in that direction.")
+        self.obj.actions -= 1
+
+    def strike(self):
+        '''
+        strike deals with the actual combat calculation:
+         - Probability of hitting the target: ((21 - (self.subj['ac'] - self.obj['ac']) / 20 ) * 100
+         - Amount of damage done to the target: random.choices(range(1, self.num_sides), k=self.num_dice)
+         If the strike misses, return 0. 
+         Else, return the amount of damage done.
+        '''
+        # Calculate probability of hitting the target
+        hit_chance = ((21 - (self.subj.ac - self.obj.ac)) / 20) * 100
+
+        # Determine if the attack hits
+        if random.uniform(0, 100) < hit_chance:
+            # Calculate the damage dealt if the attack hits
+            damage = sum(random.choices(range(1, self.num_sides + 1), k=self.num_dice))
+            return damage
+        else:
+            # Attack misses
+            return 0
+        

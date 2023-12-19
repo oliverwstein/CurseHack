@@ -74,7 +74,7 @@ class Game:
             action.Open(self, key)
         elif key == ord('a'):
             self.action_message = "Have at thee!"
-            action.Attack(self, key, self.player)
+            action.Attack(self, key, self.player, ("", "", 1, 4))
         elif key in [ord('<'), ord('>')]:
             action.Climb(self, key)
 
@@ -110,7 +110,7 @@ class Game:
         start_row = len(self.tiles[0])
 
         # Example status text, you can modify this based on the game state
-        status_text = f"{self.player.race} {self.player.role} | Player Level: {self.player.grade} | Depth: {self.depth} | Turn: {self.turn}"
+        status_text = f"{self.player.race} {self.player.role} | Player Level: {self.player.grade} | HP: {self.player.hp} | Depth: {self.depth} | Turn: {self.turn}"
 
         # Clear the previous status text
         self.stdscr.move(start_row, 0)
@@ -145,9 +145,29 @@ class Game:
 
     def end_turn(self):
         self.player.actions = self.player.calculate_actions()
+        living_monsters = []
         for monster in self.active_level.monsters:
             monster.actions = monster.calculate_actions()
+            if monster.alive():
+                living_monsters.append(monster)
+            else:
+                self.tiles[monster.pos[0]][monster.pos[1]].occupant = None
+        self.active_level.monsters = living_monsters
+
         self.turn += 1
+
+    def regenerate_player_hp(self):
+        '''Every turn there is a (1 in 3) chance that you recover
+        max(2, random.randint(self.player.stats['con']-10)).
+        Your HP cannot exceed self.player.max_hp'''
+        # 1 in 3 chance to regenerate HP
+        if random.randint(1, 3) == 1:
+            # Amount to recover is max(2, random amount based on constitution)
+            amount_to_recover = max(2, random.randint(1, max(self.player.stats['con'] - 10, 1)))
+
+            # Update player's HP, ensuring it does not exceed max_hp
+            self.player.hp = min(self.player.hp + amount_to_recover, self.player.max_hp)
+
     
     def npc_actions(self):
         while any(monster.actions > 0 for monster in self.active_level.monsters):

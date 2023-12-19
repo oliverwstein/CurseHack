@@ -10,7 +10,7 @@ class Monster:
     The Monster class is instantiated with a specific type of monster. It fetches the corresponding 
     data from the MonsterData class and sets its own attributes based on this data.
 
-    Attributes:
+    Attributes (Inputs):
         - name (str): The display name of the monster.
         - char (str): A symbol representing the monster type.
         - level (int): The base level of the monster.
@@ -29,6 +29,9 @@ class Monster:
         - resists_conveyed (tuple): A tuple of resistances that the monster can convey.
         - geno (tuple): Genetic flags related to monster generation.
         - traits (tuple): A tuple of traits or behaviors of the monster.
+    Attributes (Calculated):
+        - actions (int): Number of actions left for the turn. Based on speed.
+        - HP (int): Hit points. Based on level and monster type.
 
     Usage:
         Monster instances are created to represent individual monsters in the game, 
@@ -50,8 +53,8 @@ class Monster:
         self.level = monster_data["level"]
         self.exp = monster_data["level"]
         self.speed = monster_data["speed"]
-        self.armor_class = monster_data["ac"]
-        self.magic_resistance  = monster_data["mr"]
+        self.ac = monster_data["ac"]
+        self.mr  = monster_data["mr"]
         self.align  = monster_data["align"]
         self.freq  = monster_data["freq"]
         self.size = monster_data["size"]
@@ -63,7 +66,10 @@ class Monster:
         self.geno = monster_data["geno"]
         self.traits = monster_data["traits"]
         self.color = monster_data["color"]
+
         self.actions = self.calculate_actions()
+        self.hp = self.calculate_hp()
+
     @staticmethod
     def random_monster_based_on_rarity(monster_names=None):
         if monster_names is None:
@@ -106,6 +112,26 @@ class Monster:
             return baseline_actions + 1
         else:
             return baseline_actions
+
+    def calculate_hp(self):
+        '''
+        Monster HP is calculated as the sum of (self.level) 1d8 rolls.
+        If a monster's level is 0, it is a single 1d4 roll.'''
+        if self.level > 0:
+            # Sum of (self.level) 1d8 rolls
+            return sum(random.choices(range(1, 9), k=self.level))
+        else:
+            # Single 1d4 roll
+            return random.randint(1, 4)
+    
+    def alive(self):
+        '''
+        Check if a monster should be alive or dead.'''
+        if self.hp <= 0:
+            return False
+        else:
+            return True
+
 
     def calculate_speed(self):
         # Modify speed based on factors like status effects
