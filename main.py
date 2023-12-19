@@ -3,6 +3,7 @@ import level
 import random
 import action
 from unit import *
+import sys
 
 class Game:
     """
@@ -244,8 +245,6 @@ def main(stdscr):
     curses.use_default_colors()
     game = Game(stdscr)
     game.run_game()
-
-import sys
 
 def resize_terminal(width, height):
     sys.stdout.write(f"\033[8;{height};{width}t")
