@@ -21,13 +21,14 @@ class Tile:
         "broken_rock": ("\u00B7", True),
     }
 
-    def __init__(self, x, y, tile_type):
+    def __init__(self, x, y, tile_type, occupant = None):
         if tile_type not in Tile.tile_types:
             raise ValueError(f"Unknown tile type: {tile_type}")
         self._x = x
         self._y = y
         self.char, self.walkable = Tile.tile_types[tile_type]
         self.tile_type = tile_type
+        self.occupant = None
 
     @property
     def pos(self):

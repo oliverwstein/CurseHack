@@ -1,5 +1,9 @@
 import curses
 import level
+from unit import Unit
+from tile import *
+from monster import Monster
+
 class Action:
     """
     The `Action` class serves as a base class for defining various actions that a player can take in the game.
@@ -62,18 +66,25 @@ class Move(Action):
 
         # Check if the move is legal before updating the unit's position
         if self.is_move_legal(new_x, new_y):
+            self.game.tiles[self.unit.pos[0]][self.unit.pos[1]].occupant = None
             self.unit.pos = new_x, new_y
+            self.game.tiles[self.unit.pos[0]][self.unit.pos[1]].occupant = self.unit
 
-        elif isinstance(self.game.game_map[new_x][new_y], level.Door):
-            self.game.set_action_message("The door is closed. Press 'o' to try opening it.")
+        elif isinstance(self.game.tiles[new_x][new_y], Door):
+            if isinstance(self.unit, Unit):
+                self.game.set_action_message("The door is closed. Press 'o' to try opening it.")
+        elif isinstance(self.game.tiles[new_x][new_y].occupant, Monster):
+            if isinstance(self.unit, Unit):
+                self.game.set_action_message("You want to start something? Press 'a' to attack it.")
 
     def is_move_legal(self, x, y):
         # Check the bounds of the map
-        if x < 0 or y < 0 or x >= len(self.game.game_map) or y >= len(self.game.game_map[0]):
+        if x < 0 or y < 0 or x >= len(self.game.tiles) or y >= len(self.game.tiles[0]):
             return False
-
+        if self.game.tiles[x][y].occupant:
+            return False
         # Check if the tile is walkable
-        return self.game.game_map[x][y].walkable
+        return self.game.tiles[x][y].walkable
     
 class Climb(Action):
     """
@@ -96,25 +107,28 @@ class Climb(Action):
     
     def try_climb(self, direction):
         x, y = self.game.player.pos
-        if self.game.game_map[x][y].tile_type == direction:
+        if self.game.tiles[x][y].tile_type == direction:
             if direction == "down":
+                self.game.tiles[self.game.player.pos[0]][self.game.player.pos[1]].occupant = None
                 self.game.depth += 1
                 self.game.dungeon[self.game.depth] = level.generate_level(self.game.map_width, self.game.map_height, self.game.room_threshold, self.game.depth)
                 self.game.active_level = self.game.dungeon[self.game.depth]
-                self.game.game_map = self.game.active_level.grid
+                self.game.tiles = self.game.active_level.grid
                 self.game.player.pos = self.game.active_level.up_stair.pos
+                self.game.tiles[self.game.player.pos[0]][self.game.player.pos[1]].occupant = self.game.player.pos
                 self.game.set_action_message("Onward and downward!")
             if direction == "up":
                 if self.game.depth > 0:
+                    self.game.tiles[self.game.player.pos[0]][self.game.player.pos[1]].occupant = None
                     self.game.depth -= 1
                     self.game.dungeon[self.game.depth]
                     self.game.active_level = self.game.dungeon[self.game.depth]
-                    self.game.game_map = self.game.active_level.grid
+                    self.game.tiles = self.game.active_level.grid
                     self.game.player.pos = self.game.active_level.down_stair.pos
+                    self.game.tiles[self.game.player.pos[0]][self.game.player.pos[1]].occupant = self.game.player.pos
                     self.game.set_action_message("Was that was too deep for you?")
             
             
-
 class Open(Action):
     """
     The `Open` class manages the action of opening or closing doors within the game.
@@ -164,12 +178,78 @@ class Open(Action):
         elif direction == "up":
             target_y -= 1
         # Check if there's a door in the target direction
-        if isinstance(self.game.game_map[target_x][target_y], level.Door):
-            if self.game.game_map[target_x][target_y].state == 'closed':
-                self.game.game_map[target_x][target_y].open()
+        if isinstance(self.game.tiles[target_x][target_y], level.Door):
+            if self.game.tiles[target_x][target_y].state == 'closed':
+                self.game.tiles[target_x][target_y].open()
                 self.game.set_action_message("You open the door.")
             else:
-                self.game.game_map[target_x][target_y].close()
+                self.game.tiles[target_x][target_y].close()
                 self.game.set_action_message("You close the door.")
         else:
             self.game.set_action_message("There's nothing to open in that direction.")
+
+class Attack(Action):
+    """
+    Represents a specific type of attack that a monster can perform.
+
+    Attributes:
+        attack_type (str): The type of attack (e.g., bite, claw).
+        damage_type (str): The type of damage inflicted by the attack (e.g., physical, fire).
+        num_dice (int): The number of dice to roll for determining damage.
+        num_sides (int): The number of sides on each die used for the damage roll.
+    """
+    
+    def __init__(self, game, key, obj):
+        self.unit = obj
+        super().__init__(game, key)
+        # self.attack_type = attack[0]  # Type of attack (e.g., bite, claw)
+        # self.damage_type = attack[1]  # Type of damage (e.g., physical, fire)
+        # self.num_dice = attack[2]        # Number of dice to roll for damage
+        # self.num_sides = attack[3]      # Number of sides on each die
+    
+    def execute(self, key):
+        if key == ord('a'):
+            self.game.set_action_message("Attack what direction?")
+            self.game.current_action = self
+        else:
+            # Handle the directional input for the 'attack' action
+            self.handle_directional_attack(key)
+            self.game.current_action = None
+        self.unit.actions -= 1
+
+    def handle_directional_attack(self, key):
+        direction = ""
+        if key == curses.KEY_RIGHT:
+            direction = "right"
+        elif key == curses.KEY_LEFT:
+            direction = "left"
+        elif key == curses.KEY_DOWN:
+            direction = "down"
+        elif key == curses.KEY_UP:
+            direction = "up"
+
+        if direction:
+            self.try_attack(direction)
+            self.game.awaiting_direction = False
+        else:
+            self.game.set_action_message("Invalid direction. Please use arrow keys.")
+
+    def try_attack(self, direction):
+        unit_x, unit_y = self.unit.pos
+        target_x, target_y = unit_x, unit_y
+
+        if direction == "right":
+            target_x += 1
+        elif direction == "left":
+            target_x -= 1
+        elif direction == "down":
+            target_y += 1
+        elif direction == "up":
+            target_y -= 1
+        # Check if an actionable object is in the target direction
+        if isinstance(self.game.tiles[target_x][target_y].occupant, (Unit, Monster)):
+            self.game.set_action_message("Take that, you rogue!")
+        elif isinstance(self.game.tiles[target_x][target_y], (Wall)):
+            self.game.set_action_message("Just another brick in the wall, eh?")
+        else:
+            self.game.set_action_message("There's nothing to attack in that direction.")

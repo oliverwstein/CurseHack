@@ -1,22 +1,7 @@
+import curses
 from monster_data import MonsterData
-from action import *
 import random
 
-class Attack:
-    """
-    Represents a specific type of attack that a monster can perform.
-
-    Attributes:
-        attack_type (str): The type of attack (e.g., bite, claw).
-        damage_type (str): The type of damage inflicted by the attack (e.g., physical, fire).
-        num_dice (int): The number of dice to roll for determining damage.
-        num_sides (int): The number of sides on each die used for the damage roll.
-    """
-    def __init__(self, attack_type, damage_type, num_dice, num_sides):
-        self.attack_type = attack_type  # Type of attack (e.g., bite, claw)
-        self.damage_type = damage_type  # Type of damage (e.g., physical, fire)
-        self.num_dice = num_dice        # Number of dice to roll for damage
-        self.num_sides = num_sides      # Number of sides on each die
 
 class Monster:
     """
@@ -125,11 +110,6 @@ class Monster:
     def calculate_speed(self):
         # Modify speed based on factors like status effects
         return self.speed
-
-    def take_action(self, game):
-        # Currently, the monsters just move around.
-        key = random.choice([curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_UP, curses.KEY_DOWN])
-        Move(game, key, self)
 
     @property
     def pos(self):

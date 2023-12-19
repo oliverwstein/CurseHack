@@ -15,7 +15,7 @@ class Game:
         room_threshold: A randomly determined threshold for room generation within a level.
         depth: Represents the current depth level of the dungeon.
         active_level: An instance of `Level`, representing the current level of the dungeon.
-        game_map: The grid representation of the current level.
+        tiles: The grid representation of the current level.
         dungeon: A dictionary holding different levels of the dungeon.
         player: An instance of `Unit`, representing the player's character.
         action_message: A message string displayed to the player based on actions.
@@ -51,10 +51,11 @@ class Game:
         self.room_threshold = random.randint(6, 10)
         self.depth = 0
         self.active_level = level.generate_level(self.map_width, self.map_height, self.room_threshold, self.depth)
-        self.game_map = self.active_level.grid
+        self.tiles = self.active_level.grid
         self.dungeon = dict({self.depth:self.active_level})
 
         self.player = Unit(*self.active_level.up_stair.pos, role = 'Wizard', race = 'Human', char  = '@')
+        self.tiles[self.player.pos[0]][self.player.pos[1]].occupant = self.player
         self.action_message = "What's the move, boss?"
         self.current_action = None
         self.turn = 1
@@ -71,11 +72,14 @@ class Game:
             action.Move(self, key, self.player)
         elif key == ord('o'):
             action.Open(self, key)
+        elif key == ord('a'):
+            self.action_message = "Have at thee!"
+            action.Attack(self, key, self.player)
         elif key in [ord('<'), ord('>')]:
             action.Climb(self, key)
 
     def render_map(self):
-        for x, column in enumerate(self.game_map):
+        for x, column in enumerate(self.tiles):
             for y, tile in enumerate(column):
                 # Ensure x, y are within the bounds of the stdscr dimensions
                 if 0 <= y < curses.LINES and 0 <= x < curses.COLS:
@@ -103,7 +107,7 @@ class Game:
         
     def render_status_text(self):
         # Define the row from which to start displaying the text
-        start_row = len(self.game_map[0])
+        start_row = len(self.tiles[0])
 
         # Example status text, you can modify this based on the game state
         status_text = f"{self.player.race} {self.player.role} | Player Level: {self.player.grade} | Depth: {self.depth} | Turn: {self.turn}"
@@ -117,7 +121,7 @@ class Game:
 
     def render_action_message(self):
         # Define where to render the status message
-        message_row = len(self.game_map[0]) + 1 
+        message_row = len(self.tiles[0]) + 1 
 
         # Clear the previous message
         self.stdscr.move(message_row, 0)
@@ -133,8 +137,8 @@ class Game:
             self.render_map()
             self.render_status_text()
             self.render_action_message()
-            self.stdscr.refresh()
             self.handle_input()
+            self.stdscr.refresh()
             if self.player.actions == 0:
                 self.npc_actions()
                 self.end_turn()
@@ -149,8 +153,13 @@ class Game:
         while any(monster.actions > 0 for monster in self.active_level.monsters):
             for monster in self.active_level.monsters:
                 if monster.actions > 0:
-                    monster.take_action(self)
+                    self.take_action(monster)
                     monster.actions -= 1
+    
+    def take_action(self, monster):
+        # Currently, the monsters just move around.
+        key = random.choice([curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_UP, curses.KEY_DOWN])
+        action.Move(self, key, monster)
 
 def main(stdscr):
     curses.start_color()
