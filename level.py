@@ -156,7 +156,7 @@ class Level():
                 return False
 
             # Check if the corridor overlaps with non-backdrop tiles
-            if self.grid[x][y].char != Tile.tile_types['backdrop'][0]:
+            if self.grid[x][y].symbol != Tile.tile_types['backdrop'][0]:
                 return False
 
             corridor_path.append((x, y))
@@ -340,7 +340,8 @@ def generate_level(map_width, map_height, room_threshold, depth):
     level.add_stairs()
     for room in level.rooms_placed:
         feature = level.add_feature(room)
-        level.monsters += level.generate_monsters(feature)
+        if random.choice([True, False]):
+            level.monsters += level.generate_monsters(feature)
     return level
 
 

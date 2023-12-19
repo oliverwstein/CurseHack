@@ -1,21 +1,7 @@
+import curses
 from monster_data import MonsterData
 import random
 
-class Attack:
-    """
-    Represents a specific type of attack that a monster can perform.
-
-    Attributes:
-        attack_type (str): The type of attack (e.g., bite, claw).
-        damage_type (str): The type of damage inflicted by the attack (e.g., physical, fire).
-        num_dice (int): The number of dice to roll for determining damage.
-        num_sides (int): The number of sides on each die used for the damage roll.
-    """
-    def __init__(self, attack_type, damage_type, num_dice, num_sides):
-        self.attack_type = attack_type  # Type of attack (e.g., bite, claw)
-        self.damage_type = damage_type  # Type of damage (e.g., physical, fire)
-        self.num_dice = num_dice        # Number of dice to roll for damage
-        self.num_sides = num_sides      # Number of sides on each die
 
 class Monster:
     """
@@ -24,7 +10,7 @@ class Monster:
     The Monster class is instantiated with a specific type of monster. It fetches the corresponding 
     data from the MonsterData class and sets its own attributes based on this data.
 
-    Attributes:
+    Attributes (Inputs):
         - name (str): The display name of the monster.
         - char (str): A symbol representing the monster type.
         - level (int): The base level of the monster.
@@ -43,6 +29,9 @@ class Monster:
         - resists_conveyed (tuple): A tuple of resistances that the monster can convey.
         - geno (tuple): Genetic flags related to monster generation.
         - traits (tuple): A tuple of traits or behaviors of the monster.
+    Attributes (Calculated):
+        - actions (int): Number of actions left for the turn. Based on speed.
+        - HP (int): Hit points. Based on level and monster type.
 
     Usage:
         Monster instances are created to represent individual monsters in the game, 
@@ -59,13 +48,13 @@ class Monster:
 
         monster_data = MonsterData.monsters[name]
 
-        self.name = name
-        self.char = monster_data["char"]
+        self.name = monster_data["name"]
+        self.symbol = monster_data["symbol"]
         self.level = monster_data["level"]
         self.exp = monster_data["level"]
         self.speed = monster_data["speed"]
-        self.armor_class = monster_data["ac"]
-        self.magic_resistance  = monster_data["mr"]
+        self.ac = monster_data["ac"]
+        self.mr  = monster_data["mr"]
         self.align  = monster_data["align"]
         self.freq  = monster_data["freq"]
         self.size = monster_data["size"]
@@ -77,7 +66,11 @@ class Monster:
         self.geno = monster_data["geno"]
         self.traits = monster_data["traits"]
         self.color = monster_data["color"]
+        self.hostile = False
+
         self.actions = self.calculate_actions()
+        self.hp = self.calculate_hp()
+
     @staticmethod
     def random_monster_based_on_rarity(monster_names=None):
         if monster_names is None:
@@ -121,12 +114,29 @@ class Monster:
         else:
             return baseline_actions
 
+    def calculate_hp(self):
+        '''
+        Monster HP is calculated as the sum of (self.level) 1d8 rolls.
+        If a monster's level is 0, it is a single 1d4 roll.'''
+        if self.level > 0:
+            # Sum of (self.level) 1d8 rolls
+            return sum(random.choices(range(1, 9), k=self.level))
+        else:
+            # Single 1d4 roll
+            return random.randint(1, 4)
+    
+    def alive(self):
+        '''
+        Check if a monster should be alive or dead.'''
+        if self.hp <= 0:
+            return False
+        else:
+            return True
+
+
     def calculate_speed(self):
         # Modify speed based on factors like status effects
         return self.speed
-
-    def take_action(self):
-        pass
 
     @property
     def pos(self):

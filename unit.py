@@ -10,7 +10,7 @@ class Unit:
 
         self._x = x
         self._y = y
-        self.char = char
+        self.symbol = char
         self.grade = grade
         self.role = role
         self.race = race
@@ -19,6 +19,9 @@ class Unit:
         self.stats = UnitData.classes[role]['base_stats'].copy()
         self.growths = UnitData.classes[role]['growths'].copy()
         race_max_stats = UnitData.races[race]['max_stats']
+        self.max_hp = UnitData.races[race]['hp']['starting'] + UnitData.classes[role]['hp']['starting']
+        self.hp = self.max_hp
+        self.ac = 10
 
         # Randomly increment stats until they sum to 75
         while sum(self.stats.values()) < 75:
@@ -57,6 +60,14 @@ class Unit:
     def calculate_speed(self):
         # Modify speed based on factors like status effects
         return self.speed
+
+    def alive(self):
+        '''
+        Check if the should be alive or dead.'''
+        if self.hp <= 0:
+            return False
+        else:
+            return True
 
     @property
     def pos(self):

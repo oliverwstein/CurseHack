@@ -6,7 +6,7 @@ class UnitData:
                         'con': 7,
                         'int': 10,
                         'wis': 7,
-                        'cha': 7
+                        'cha': 7,
                         },
                     'growths':
                         {'str': 10,
@@ -16,6 +16,8 @@ class UnitData:
                         'wis': 10,
                         'cha': 10
                         },
+                    'hp':
+                        {'starting': 10},
                     },
     }
     races = {
@@ -27,7 +29,9 @@ class UnitData:
                 'int': 18,
                 'wis': 18,
                 'cha': 18
-            }
+            },
+            'hp':
+                {'starting': 2},
             
         },
         "Elf": {
@@ -38,7 +42,9 @@ class UnitData:
                 'int': 20,
                 'wis': 20,
                 'cha': 18
-            }
+            },
+            'hp':
+                {'starting': 1},
         },
         "Dwarf": {
             'max_stats': {
@@ -48,7 +54,9 @@ class UnitData:
                 'int': 16,
                 'wis': 16,
                 'cha': 16
-            }
+            },
+            'hp':
+                {'starting': 4},
         },
         "Gnome": {
             'max_stats': {
@@ -58,7 +66,9 @@ class UnitData:
                 'int': 19,
                 'wis': 18,
                 'cha': 18
-            }
+            },
+            'hp':
+                {'starting': 1},
         },
         "Orc": {
             'max_stats': {
@@ -68,6 +78,8 @@ class UnitData:
                 'int': 16,
                 'wis': 16,
                 'cha': 16
-            }
+            },
+            'hp':
+                {'starting': 1},
         }
     }
