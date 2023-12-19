@@ -48,8 +48,8 @@ class Monster:
 
         monster_data = MonsterData.monsters[name]
 
-        self.name = name
-        self.char = monster_data["char"]
+        self.name = monster_data["name"]
+        self.symbol = monster_data["symbol"]
         self.level = monster_data["level"]
         self.exp = monster_data["level"]
         self.speed = monster_data["speed"]
@@ -66,6 +66,7 @@ class Monster:
         self.geno = monster_data["geno"]
         self.traits = monster_data["traits"]
         self.color = monster_data["color"]
+        self.hostile = False
 
         self.actions = self.calculate_actions()
         self.hp = self.calculate_hp()

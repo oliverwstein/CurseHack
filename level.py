@@ -156,7 +156,7 @@ class Level():
                 return False
 
             # Check if the corridor overlaps with non-backdrop tiles
-            if self.grid[x][y].char != Tile.tile_types['backdrop'][0]:
+            if self.grid[x][y].symbol != Tile.tile_types['backdrop'][0]:
                 return False
 
             corridor_path.append((x, y))

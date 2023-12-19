@@ -26,7 +26,7 @@ class Tile:
             raise ValueError(f"Unknown tile type: {tile_type}")
         self._x = x
         self._y = y
-        self.char, self.walkable = Tile.tile_types[tile_type]
+        self.symbol, self.walkable = Tile.tile_types[tile_type]
         self.tile_type = tile_type
         self.occupant = None
 
@@ -51,11 +51,11 @@ class Door(Tile):
         self.state = state
     
     def open(self):
-        self.char, self.walkable = Tile.tile_types['open_door']
+        self.symbol, self.walkable = Tile.tile_types['open_door']
         self.state = 'open'
 
     def close(self):
-        self.char, self.walkable = Tile.tile_types['closed_door']
+        self.symbol, self.walkable = Tile.tile_types['closed_door']
         self.state = 'closed'
 
 

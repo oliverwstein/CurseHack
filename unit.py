@@ -10,7 +10,7 @@ class Unit:
 
         self._x = x
         self._y = y
-        self.char = char
+        self.symbol = char
         self.grade = grade
         self.role = role
         self.race = race
@@ -60,6 +60,14 @@ class Unit:
     def calculate_speed(self):
         # Modify speed based on factors like status effects
         return self.speed
+
+    def alive(self):
+        '''
+        Check if the should be alive or dead.'''
+        if self.hp <= 0:
+            return False
+        else:
+            return True
 
     @property
     def pos(self):

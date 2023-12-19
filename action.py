@@ -203,11 +203,12 @@ class Attack(Action):
     def __init__(self, game, key, obj, attack:tuple):
         self.obj = obj
         self.subj = None
-        super().__init__(game, key)
         self.attack_type = attack[0]  # Type of attack (e.g., bite, claw)
         self.damage_type = attack[1]  # Type of damage (e.g., physical, fire)
         self.num_dice = attack[2]        # Number of dice to roll for damage
         self.num_sides = attack[3]      # Number of sides on each die
+        super().__init__(game, key)
+        
     
     def execute(self, key):
         if key == ord('a'):
@@ -252,19 +253,33 @@ class Attack(Action):
             self.subj = self.game.tiles[target_x][target_y]
         # Check if an actionable object is in the target direction
         if isinstance(self.subj, (Unit, Monster)):
-            self.game.set_action_message("Take that, you rogue!")
+            if isinstance(self.obj, Monster):
+                self.game.set_action_message(f"{self.obj.name} attacked you!")
+            else:
+                self.game.set_action_message("Take that, you rogue!")
             damage = self.strike()
             if damage == 0:
-                self.game.set_action_message("A clever ruse!")
+                if isinstance(self.obj, Monster):
+                    self.game.set_action_message(f"{self.obj.name} missed!")
+                else:
+                    self.game.set_action_message("A clever ruse!")
             else:
-                self.game.set_action_message(f"Take {damage}, you beast!")
+                if isinstance(self.obj, Monster):
+                    self.game.set_action_message(f"You took {damage} damage!")
+                else:
+                    self.game.set_action_message(f"Take {damage}, you beast!")
                 self.subj.hp -= damage
                 if not self.subj.alive():
-                    self.game.set_action_message(f"The beast is slain!")
+                    if isinstance(self.obj, Monster):
+                        self.game.set_action_message("You died!")
+                    else:
+                        self.game.set_action_message(f"The {self.subj.name} is slain!")
         elif isinstance(self.subj, (Wall)):
-            self.game.set_action_message("Just another brick in the wall, eh?")
+            if isinstance(self.obj, Unit):
+                self.game.set_action_message("Just another brick in the wall, eh?")
         else:
-            self.game.set_action_message("There's nothing to attack in that direction.")
+            if isinstance(self.obj, Unit):
+                self.game.set_action_message("There's nothing to attack in that direction.")
         self.obj.actions -= 1
 
     def strike(self):

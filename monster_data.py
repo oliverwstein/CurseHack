@@ -30,7 +30,7 @@ class MonsterData:
     monsters = {
         "giant_ant": {
             "name": "giant ant",
-            "char": 'a',
+            "symbol": 'a',
             "level": 2,
             "exp": 18,
             "speed": 3, 
@@ -42,7 +42,7 @@ class MonsterData:
             "nutrition": 10,
             "size": "tiny",
             "color": "Brown",
-            "attacks": (('AT_BITE', 'AD_PHYS', 1, 4)),
+            "attacks": (('AT_BITE', 'AD_PHYS', 1, 4), ('AT_BITE', 'AD_PHYS', 1, 4)),
             "resists": (),
             "resists_conveyed": (),
             "geno": ("G_GENO", "G_SGROUP", "G_RANDOM"),
@@ -50,7 +50,7 @@ class MonsterData:
             },
         "python": {
             "name": "python",
-            "char": 'S',
+            "symbol": 'S',
             "level": 6,
             "exp": 82,
             "speed": 3, 

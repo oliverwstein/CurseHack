@@ -45,6 +45,7 @@ class Game:
     """
     def __init__(self, stdscr):
         curses.curs_set(0)  # Hide the cursor
+        self.play = True
         self.stdscr = stdscr
         self.map_width = 70
         self.map_height = 30
@@ -59,6 +60,7 @@ class Game:
         self.action_message = "What's the move, boss?"
         self.current_action = None
         self.turn = 1
+        
 
     def set_action_message(self, message):
         self.action_message = message
@@ -84,7 +86,7 @@ class Game:
                 # Ensure x, y are within the bounds of the stdscr dimensions
                 if 0 <= y < curses.LINES and 0 <= x < curses.COLS:
                     try:
-                        self.stdscr.addch(y, x, tile.char)
+                        self.stdscr.addch(y, x, tile.symbol)
                     except curses.error:
                         pass  # Ignore curses error if a character cannot be added
 
@@ -92,7 +94,7 @@ class Game:
         player_x, player_y = self.player.pos
         if 0 <= player_y < curses.LINES and 0 <= player_x < curses.COLS:
             try:
-                self.stdscr.addch(player_y, player_x, self.player.char)
+                self.stdscr.addch(player_y, player_x, self.player.symbol)
             except curses.error:
                 pass  # Ignore curses error if a character cannot be added
         
@@ -101,7 +103,7 @@ class Game:
             monster_x, monster_y = monster.pos
             if 0 <= monster_y < curses.LINES and 0 <= monster_x < curses.COLS:
                 try:
-                    self.stdscr.addch(monster_y, monster_x, monster.char)
+                    self.stdscr.addch(monster_y, monster_x, monster.symbol)
                 except curses.error:
                     pass  # Ignore curses error if a character cannot be added
         
@@ -132,7 +134,7 @@ class Game:
 
 
     def run_game(self):
-        while True:
+        while self.play:
             self.stdscr.clear()
             self.render_map()
             self.render_status_text()
@@ -142,9 +144,15 @@ class Game:
             if self.player.actions == 0:
                 self.npc_actions()
                 self.end_turn()
+        self.stdscr.clear()
+        self.render_action_message()
 
     def end_turn(self):
         self.player.actions = self.player.calculate_actions()
+        if self.player.alive() == False:
+            self.action_message = "You're dead, Kat."
+            self.play = False
+        self.regenerate_player_hp()
         living_monsters = []
         for monster in self.active_level.monsters:
             monster.actions = monster.calculate_actions()
@@ -173,13 +181,62 @@ class Game:
         while any(monster.actions > 0 for monster in self.active_level.monsters):
             for monster in self.active_level.monsters:
                 if monster.actions > 0:
+                    x, y = monster.pos
+                    if self.player.pos in [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]:
+                        monster.hostile = True
                     self.take_action(monster)
                     monster.actions -= 1
     
     def take_action(self, monster):
-        # Currently, the monsters just move around.
-        key = random.choice([curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_UP, curses.KEY_DOWN])
-        action.Move(self, key, monster)
+        '''
+        If monster.hostile:
+        #try to fight the player. 
+            If the player is within combat range, it should attack the player. (action.Attack(self, 'mon', monster, ("", "", 1, 4)))
+            Else if, it should move towards the player. 
+                This should be done by moving in any direction that brings it closer
+                to the player. 
+                If more than one direction qualifies, it can choose one at random.
+                Else If there is no way to move closer to the player,
+                    move in a random direction.
+        If the monster is not hostile to the player, it should move in a 
+        random direction. 
+        '''
+        if monster.hostile:
+            x, y = monster.pos
+            p_x, p_y = self.player.pos
+            if self.player.pos == (x-1, y):
+                action.Attack(self, curses.KEY_LEFT, monster, random.choice(monster.attacks))
+            elif self.player.pos == (x+1, y):
+                action.Attack(self, curses.KEY_RIGHT, monster, random.choice(monster.attacks))
+            elif self.player.pos == (x, y-1):
+                action.Attack(self, curses.KEY_UP, monster, random.choice(monster.attacks))
+            elif self.player.pos == (x, y+1):
+                action.Attack(self, curses.KEY_DOWN, monster, random.choice(monster.attacks))
+            else:
+                key = random.choice(Game.determine_directions(monster.pos, self.player.pos))
+                action.Move(self, key, monster)
+
+        else:
+            key = random.choice([curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_UP, curses.KEY_DOWN])
+            action.Move(self, key, monster)
+
+    @staticmethod
+    def determine_directions(obj:tuple, subj:tuple):
+        directions = []
+
+        # Compare x-coordinates
+        if subj[0] > obj[0]:
+            directions.append(curses.KEY_RIGHT)
+        elif subj[0] < obj[0]:
+            directions.append(curses.KEY_LEFT)
+
+        # Compare y-coordinates
+        if subj[1] > obj[1]:
+            directions.append(curses.KEY_DOWN)
+        elif subj[1] < obj[1]:
+            directions.append(curses.KEY_UP)
+
+        return directions
 
 def main(stdscr):
     curses.start_color()
