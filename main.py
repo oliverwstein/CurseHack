@@ -144,6 +144,7 @@ class Game:
             if self.player.actions == 0:
                 self.npc_actions()
                 self.end_turn()
+            
         self.stdscr.clear()
         self.render_action_message()
 
@@ -244,4 +245,11 @@ def main(stdscr):
     game = Game(stdscr)
     game.run_game()
 
+import sys
+
+def resize_terminal(width, height):
+    sys.stdout.write(f"\033[8;{height};{width}t")
+    sys.stdout.flush()
+
+resize_terminal(140, 40)
 curses.wrapper(main)

@@ -1,3 +1,4 @@
+import curses
 class Tile:
     # Mapping of tile types to their characters and walkability
     tile_types = {
@@ -29,6 +30,7 @@ class Tile:
         self.symbol, self.walkable = Tile.tile_types[tile_type]
         self.tile_type = tile_type
         self.occupant = None
+        self.color = curses.color_pair(2)
 
     @property
     def pos(self):
