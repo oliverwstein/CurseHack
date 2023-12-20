@@ -18,8 +18,8 @@ CurseHack is a roguelike game inspired by NetHack, developed in Python using the
 - **Functionality**: Room initialization, door generation, feature handling, and utility functions for feature positioning.
 
 ### `action.py`
-- **Purpose**: Defines various actions a player can perform in the game.
-- **Functionality**: Action base class, move action, climb action, and open action.
+- **Purpose**: Defines various actions the player (and monsters) can perform in the game.
+- **Functionality**: Action base class, move action, climb action, open action, attack action.
 
 ### `tile.py`
 - **Purpose**: Defines the `Tile` class and its subclasses for different game map elements.
@@ -42,7 +42,24 @@ CurseHack is a roguelike game inspired by NetHack, developed in Python using the
 - **Content**: Specifies base stats and growth rates for unit classes and maximum stats for races.
 
 ### `monster.py`
-- **Purpose**: [Description of the monster file – still in progress].
+- **Purpose**: Manages the attributes and behaviors of monsters in the game.
+- **Functionality**:
+  - **Monster Class**: Represents a monster (NPC) in the game. Each monster instance is created with a set of attributes defined in `MonsterData`.
+  - **Key Attributes**:
+    - Basic Attributes: Includes name, symbol, level, experience, speed, armor class, magic resistance, alignment, frequency, weight, nutritional value, size, color.
+    - Combat Attributes: Defines the monster's attack types, resistances, resistances conveyed, and genetic flags.
+    - Behavioral Attributes: Specifies traits or behaviors of the monster.
+  - **Dynamic Calculations**:
+    - `calculate_actions()`: Determines the number of actions a monster can perform in a turn, based on its speed.
+    - `calculate_hp()`: Calculates the monster's hit points based on its level.
+    - `alive()`: Checks the monster's living status.
+  - **Position Handling**:
+    - The position of the monster (`pos`) is managed with getter and setter methods.
+  - **Random Monster Generation**:
+    - `random_monster_based_on_rarity()`: Selects a monster based on its rarity and specified attributes.
+  - **Usage**: Used to create and manage individual monster instances in the game, each with unique characteristics and abilities.
+- **Dependencies**: Requires `monster_data.py` for monster attributes and `random` module for probabilistic calculations.
+
 
 ## Installation and Running
 - **Requirements**: Python 3.x, curses library.
